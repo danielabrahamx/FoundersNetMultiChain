@@ -1,0 +1,27 @@
+{
+    "name": "@foundersnet/frontend",
+    "version": "1.0.0",
+    "private": true,
+    "description": "FoundersNet frontend with Vite, HTMX, and Tailwind CSS",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "clean": "rm -rf dist",
+        "lint": "eslint src --ext .ts,.js",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "htmx.org": "^2.0.3",
+        "viem": "^2.21.45"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.0",
+        "autoprefixer": "^10.4.20",
+        "postcss": "^8.4.49",
+        "tailwindcss": "^3.4.15",
+        "typescript": "^5.6.3",
+        "vite": "^5.4.11"
+    }
+}

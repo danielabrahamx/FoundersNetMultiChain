@@ -1,0 +1,97 @@
+<a href="/market/<%= market.id %>"
+    class="card-glass rounded-xl p-5 md:p-6 block hover:border-primary/50 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-primary/50"
+    aria-label="View market: <%= market.question %>">
+
+    <!-- Header Row -->
+    <div class="flex items-start justify-between gap-4 mb-4">
+        <!-- Status Badge -->
+        <span class="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full 
+            <%= market.isOpen ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+               market.isResolved ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 
+               'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' %>">
+            <% if (market.isOpen) { %>
+                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse" aria-hidden="true"></span>
+                <% } %>
+                    <%= market.stateLabel %>
+        </span>
+
+        <!-- Market ID -->
+        <span class="text-gray-500 text-sm font-mono">
+            #<%= market.id %>
+        </span>
+    </div>
+
+    <!-- Question -->
+    <h3 class="text-lg font-semibold mb-4 group-hover:text-primary transition-colors line-clamp-2">
+        <%= market.question %>
+    </h3>
+
+    <!-- Odds Bar Visualization -->
+    <div class="mb-4"
+        aria-label="Current odds: <%= market.yesPercentage.toFixed(1) %>% YES, <%= market.noPercentage.toFixed(1) %>% NO">
+        <!-- Percentage Labels -->
+        <div class="flex justify-between text-sm mb-2">
+            <span class="text-yes font-semibold flex items-center gap-1">
+                <span class="w-2 h-2 bg-yes rounded-full" aria-hidden="true"></span>
+                YES <%= market.yesPercentage.toFixed(1) %>%
+            </span>
+            <span class="text-no font-semibold flex items-center gap-1">
+                NO <%= market.noPercentage.toFixed(1) %>%
+                    <span class="w-2 h-2 bg-no rounded-full" aria-hidden="true"></span>
+            </span>
+        </div>
+
+        <!-- Bar Visualization -->
+        <div class="h-3 bg-gray-700/50 rounded-full overflow-hidden flex" role="img" aria-hidden="true">
+            <div class="bg-gradient-to-r from-yes to-yes-dark transition-all duration-500 ease-out"
+                style="width: <%= market.yesPercentage %>%"></div>
+            <div class="bg-gradient-to-r from-no-dark to-no transition-all duration-500 ease-out flex-1"></div>
+        </div>
+    </div>
+
+    <!-- Footer Info -->
+    <div class="flex flex-wrap justify-between items-center gap-2 text-sm">
+        <!-- Total Pool -->
+        <span class="flex items-center gap-1 text-gray-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Pool: $<%= market.totalPool %> USDC
+        </span>
+
+        <!-- Time / Outcome Info -->
+        <span class="text-gray-400 flex items-center gap-1">
+            <% if (market.isResolved && market.outcomeLabel) { %>
+                <span class="font-medium">Outcome:</span>
+                <span class="<%= market.outcomeLabel === 'YES' ? 'text-yes' : 'text-no' %> font-bold">
+                    <%= market.outcomeLabel %>
+                </span>
+                <% } else if (market.isOpen) { %>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Closes: <%= new Date(market.closeTime * 1000).toLocaleDateString('en-US', { month: 'short' ,
+                        day: 'numeric' , year: 'numeric' }) %>
+                        <% } else { %>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Awaiting resolution
+                            <% } %>
+        </span>
+    </div>
+
+    <!-- Hover Indicator -->
+    <div
+        class="mt-4 flex items-center justify-end text-primary text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+        <span>View Market</span>
+        <svg class="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+    </div>
+</a>

@@ -1,0 +1,220 @@
+<%- include('../layouts/main', { body: ` <!-- Back Link -->
+    <nav class="mb-6" aria-label="Breadcrumb">
+        <a href="/" class="inline-flex items-center text-gray-400 hover:text-white transition-colors group">
+            <svg class="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Markets
+        </a>
+    </nav>
+
+    <!-- Market Header Card -->
+    <article class="card-glass rounded-xl p-6 md:p-8 mb-8">
+        <header class="flex flex-col md:flex-row items-start justify-between gap-4 mb-6">
+            <div>
+                <!-- Status Badge -->
+                <span class="inline-flex items-center gap-2 px-3 py-1 text-sm rounded-full mb-4 ` + 
+                    (market.isOpen ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+                     market.isResolved ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 
+                     'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30') + `">
+                    ` + (market.isOpen ? '<span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>' : '') +
+                    `
+                    ` + market.stateLabel + `
+                </span>
+
+                <!-- Question -->
+                <h1 class="text-2xl md:text-3xl font-bold mb-3">` + market.question + `</h1>
+
+                <!-- Market Info -->
+                <div class="flex flex-wrap items-center gap-4 text-gray-400 text-sm">
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        ` + (market.isResolved ? 'Resolved' : 'Closes') + `: ` + market.closeTimeFormatted + `
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                        </svg>
+                        Market #` + market.id + `
+                    </span>
+                </div>
+            </div>
+
+            ` + (market.isResolved && market.outcomeLabel ? `
+            <!-- Outcome Display (if resolved) -->
+            <div
+                class="text-right px-6 py-4 rounded-xl ` + (market.outcomeLabel === 'YES' ? 'bg-yes/10 border border-yes/30' : 'bg-no/10 border border-no/30') + `">
+                <p class="text-gray-400 text-sm mb-1">Final Outcome</p>
+                <span class="text-3xl font-bold ` + (market.outcomeLabel === 'YES' ? 'text-yes' : 'text-no') + `">
+                    ` + market.outcomeLabel + `
+                </span>
+            </div>
+            ` : '') + `
+        </header>
+
+        <!-- Pool Display with Auto-Refresh -->
+        <div id="pool-display" hx-get="/pools/` + market.id + `" hx-trigger="every 10s" hx-swap="innerHTML">
+            ` + include('../partials/pool-display', { market: market }) + `
+        </div>
+    </article>
+
+    <!-- Two Column Layout -->
+    <div class="grid lg:grid-cols-2 gap-8">
+        <!-- Betting Form Section -->
+        <section class="card-glass rounded-xl p-6" aria-labelledby="betting-section-heading">
+            <h2 id="betting-section-heading" class="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                ` + (market.isOpen ? 'Place Your Bet' : (market.isResolved ? 'Betting Closed' : 'Awaiting Resolution'))
+                + `
+            </h2>
+
+            <div id="betting-form" hx-get="/markets/` + market.id + `/betting-form" hx-trigger="load"
+                hx-swap="innerHTML">
+                <div class="space-y-4">
+                    <div class="h-12 skeleton rounded-lg"></div>
+                    <div class="h-12 skeleton rounded-lg"></div>
+                    <div class="h-12 skeleton rounded-lg"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Your Position Section -->
+        <section class="card-glass rounded-xl p-6" aria-labelledby="position-section-heading">
+            <h2 id="position-section-heading" class="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Your Position
+            </h2>
+
+            <div id="user-position" hx-get="/markets/` + market.id + `/position" hx-trigger="load" hx-swap="innerHTML">
+                <div class="space-y-4">
+                    <div class="h-16 skeleton rounded-lg"></div>
+                    <div class="h-10 skeleton rounded-lg"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Market Details Section (Additional Info) -->
+    <section class="mt-8 card-glass rounded-xl p-6" aria-labelledby="details-section-heading">
+        <h2 id="details-section-heading" class="text-lg font-semibold mb-4">Market Details</h2>
+
+        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div class="bg-white/5 rounded-lg p-4">
+                <p class="text-gray-400 mb-1">Market ID</p>
+                <p class="font-mono text-white">#` + market.id + `</p>
+            </div>
+
+            <div class="bg-white/5 rounded-lg p-4">
+                <p class="text-gray-400 mb-1">Close Time</p>
+                <p class="text-white">` + market.closeTimeFormatted + `</p>
+            </div>
+
+            <div class="bg-white/5 rounded-lg p-4">
+                <p class="text-gray-400 mb-1">Status</p>
+                <p class="text-white">` + market.stateLabel + `</p>
+            </div>
+
+            <div class="bg-white/5 rounded-lg p-4">
+                <p class="text-gray-400 mb-1">Total Volume</p>
+                <p class="text-white">$` + market.totalPool + ` USDC</p>
+            </div>
+        </div>
+    </section>
+
+    ` + (!market.isResolved && !market.isOpen ? `
+    <!-- Admin Resolution Section (Admin Only) -->
+    <section id="admin-resolution"
+        class="hidden admin-only mt-8 card-glass rounded-xl p-6 border-2 border-yellow-500/30"
+        aria-labelledby="resolution-section-heading">
+        <h2 id="resolution-section-heading" class="text-lg font-semibold mb-4 flex items-center gap-2 text-yellow-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Admin: Resolve Market
+        </h2>
+
+        <p class="text-gray-400 mb-4">This market is closed and awaiting resolution. Choose the winning outcome:</p>
+
+        <div class="flex flex-wrap gap-4">
+            <button onclick="resolveMarket(` + market.id + `, true)"
+                class="flex-1 min-w-[120px] px-6 py-3 btn-yes text-white rounded-lg font-semibold transition-all focus:ring-2 focus:ring-yes/50">
+                Resolve YES
+            </button>
+            <button onclick="resolveMarket(` + market.id + `, false)"
+                class="flex-1 min-w-[120px] px-6 py-3 btn-no text-white rounded-lg font-semibold transition-all focus:ring-2 focus:ring-no/50">
+                Resolve NO
+            </button>
+        </div>
+
+        <p class="text-yellow-400/70 text-xs mt-4">⚠️ Warning: Resolution is permanent and cannot be undone.</p>
+    </section>
+    ` : '') + `
+
+    <script>
+        const marketId = ` + market.id + `;
+        const isMarketOpen = ` + market.isOpen + `;
+        const isMarketResolved = ` + market.isResolved + `;
+
+        // Refresh position and form when wallet connects/disconnects
+        const marketOnWalletConnected = window.onWalletConnected;
+        window.onWalletConnected = async function (address) {
+            await marketOnWalletConnected(address);
+            htmx.trigger('#user-position', 'load');
+            htmx.trigger('#betting-form', 'load');
+        };
+
+        const marketDisconnectWallet = window.disconnectWallet;
+        window.disconnectWallet = function () {
+            marketDisconnectWallet();
+            htmx.trigger('#user-position', 'load');
+            htmx.trigger('#betting-form', 'load');
+        };
+
+        // Admin resolution function
+        async function resolveMarket(marketId, outcome) {
+            if (!window.walletAddress || !window.isAdmin) {
+                alert('Admin access required');
+                return;
+            }
+
+            const outcomeText = outcome ? 'YES' : 'NO';
+            if (!confirm('Are you sure you want to resolve this market as ' + outcomeText + '? This action is PERMANENT.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/market/' + marketId + '/resolve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ outcome: outcome })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    alert(data.error || 'Failed to build resolution transaction');
+                    return;
+                }
+
+                console.log('Resolution transaction ready:', data.transaction);
+                alert('Transaction built! Sign in your wallet to complete resolution.');
+
+            } catch (error) {
+                console.error('Resolution error:', error);
+                alert('Failed to resolve: ' + error.message);
+            }
+        }
+    </script>
+    ` }) %>

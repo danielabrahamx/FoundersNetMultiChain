@@ -1,0 +1,366 @@
+<%# Resolve Market Page - Admin only %>
+    <%- include('../layouts/main', { body: ` <!-- Admin Mode Indicator -->
+        <div class="mb-6 flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
+            <div class="w-3 h-3 rounded-full bg-yellow-400 animate-pulse"></div>
+            <div class="flex-1">
+                <span class="font-semibold text-yellow-400">Admin Mode Active</span>
+                <span class="text-yellow-200/70 text-sm ml-2">Resolving Market #` + market.id + `</span>
+            </div>
+            <a href="/admin" class="text-yellow-400 hover:text-yellow-300 text-sm">← Back to Dashboard</a>
+        </div>
+
+        <div class="max-w-2xl mx-auto">
+            <!-- Page Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold mb-2">Resolve Market</h1>
+                <p class="text-gray-400">Determine the final outcome of this prediction market.</p>
+            </div>
+
+            <!-- Market Details Card -->
+            <div class="card-glass rounded-2xl p-6 md:p-8 mb-8">
+                <!-- Market Question -->
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-4">` + market.question + `</h2>
+
+                <!-- Status Badge -->
+                <div class="flex flex-wrap items-center gap-4 mb-6">
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ` + 
+                    (market.isOpen ? 'bg-yes/20 text-yes' : 
+                     market.isClosed ? 'bg-yellow-500/20 text-yellow-400' : 
+                     'bg-gray-500/20 text-gray-400') + `">
+                        ` + market.stateLabel + `
+                    </span>
+                    <span class="text-sm text-gray-400">Market ID: #` + market.id + `</span>
+                </div>
+
+                <!-- Pool Distribution -->
+                <div class="space-y-4 mb-6">
+                    <h3 class="text-sm font-medium text-gray-400">Final Pool Distribution</h3>
+
+                    <!-- YES Pool -->
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 text-sm font-medium text-yes">YES</div>
+                        <div class="flex-1 bg-white/10 rounded-full h-4 overflow-hidden">
+                            <div class="bg-gradient-to-r from-yes to-yes-dark h-full transition-all duration-500"
+                                style="width: ` + market.yesPercentage + `%"></div>
+                        </div>
+                        <div class="w-32 text-right">
+                            <span class="text-white font-medium">$` + market.yesPoolFormatted + `</span>
+                            <span class="text-gray-400 text-sm ml-1">(` + market.yesPercentage.toFixed(1) + `%)</span>
+                        </div>
+                    </div>
+
+                    <!-- NO Pool -->
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 text-sm font-medium text-no">NO</div>
+                        <div class="flex-1 bg-white/10 rounded-full h-4 overflow-hidden">
+                            <div class="bg-gradient-to-r from-no to-no-dark h-full transition-all duration-500"
+                                style="width: ` + market.noPercentage + `%"></div>
+                        </div>
+                        <div class="w-32 text-right">
+                            <span class="text-white font-medium">$` + market.noPoolFormatted + `</span>
+                            <span class="text-gray-400 text-sm ml-1">(` + market.noPercentage.toFixed(1) + `%)</span>
+                        </div>
+                    </div>
+
+                    <!-- Total Pool -->
+                    <div class="flex items-center justify-between pt-4 border-t border-white/10">
+                        <span class="text-gray-400">Total Pool</span>
+                        <span
+                            class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                            $` + market.totalPool + ` USDC
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Close Time -->
+                <div class="flex items-center gap-2 text-sm text-gray-400 mb-6">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Betting closed: ` + market.closeTimeFormatted + `</span>
+                </div>
+
+                <!-- Verification Links -->
+                <div class="p-4 bg-white/5 rounded-lg mb-6">
+                    <h3 class="text-sm font-medium text-gray-400 mb-3">Verification Sources</h3>
+                    <p class="text-sm text-gray-300 mb-3">
+                        Before resolving, verify the outcome using reliable sources:
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="https://www.crunchbase.com/search/funding_rounds" target="_blank"
+                            rel="noopener noreferrer"
+                            class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-sm text-white transition-colors">
+                            Crunchbase →
+                        </a>
+                        <a href="https://techcrunch.com/startups/" target="_blank" rel="noopener noreferrer"
+                            class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-sm text-white transition-colors">
+                            TechCrunch →
+                        </a>
+                        <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&type=D&dateb=&owner=include&count=40"
+                            target="_blank" rel="noopener noreferrer"
+                            class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-sm text-white transition-colors">
+                            SEC EDGAR →
+                        </a>
+                        <a href="https://www.google.com/search?q=` + encodeURIComponent(market.question + ' funding') + `"
+                            target="_blank" rel="noopener noreferrer"
+                            class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-sm text-white transition-colors">
+                            Google Search →
+                        </a>
+                    </div>
+                </div>
+
+                ` + (market.isResolved ? `
+                <!-- Already Resolved Message -->
+                <div class="p-4 rounded-lg bg-gray-500/20 border border-gray-500/30 text-center">
+                    <p class="text-gray-300">
+                        This market has already been resolved as
+                        <strong class="` + (market.outcome ? 'text-yes' : 'text-no') + `">` + market.outcomeLabel +
+                            `</strong>.
+                    </p>
+                    <a href="/admin" class="inline-block mt-2 text-primary hover:underline">← Back to Dashboard</a>
+                </div>
+                ` : market.isOpen ? `
+                <!-- Still Open Message -->
+                <div class="p-4 rounded-lg bg-yellow-500/20 border border-yellow-500/30 text-center">
+                    <p class="text-yellow-300">
+                        This market is still open for betting. It must be closed (past close time) before it can be
+                        resolved.
+                    </p>
+                    <p class="text-yellow-200/70 text-sm mt-2">
+                        Close time: ` + market.closeTimeFormatted + `
+                    </p>
+                </div>
+                ` : `
+                <!-- Resolution Buttons -->
+                <div class="space-y-4">
+                    <h3 class="text-center text-lg font-medium text-white">What is the outcome?</h3>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Resolve YES -->
+                        <button id="resolve-yes-btn" onclick="showConfirmation(true)" class="p-6 btn-yes text-white rounded-xl transition-all font-bold text-xl
+                       hover:shadow-lg hover:shadow-yes/25 active:scale-[0.98]
+                       focus:ring-2 focus:ring-yes/50 focus:outline-none">
+                            <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            YES
+                        </button>
+
+                        <!-- Resolve NO -->
+                        <button id="resolve-no-btn" onclick="showConfirmation(false)" class="p-6 btn-no text-white rounded-xl transition-all font-bold text-xl
+                       hover:shadow-lg hover:shadow-no/25 active:scale-[0.98]
+                       focus:ring-2 focus:ring-no/50 focus:outline-none">
+                            <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            NO
+                        </button>
+                    </div>
+
+                    <!-- Transaction Status -->
+                    <div id="tx-status" class="mt-6 hidden">
+                        <div id="tx-pending" class="hidden p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-yellow-400 spinner" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span class="text-yellow-400">Transaction pending...</span>
+                            </div>
+                            <a id="tx-link" href="#" target="_blank" rel="noopener noreferrer"
+                                class="inline-block mt-2 text-sm text-yellow-400/70 hover:text-yellow-400">
+                                View on Explorer →
+                            </a>
+                        </div>
+                        <div id="tx-success" class="hidden p-4 rounded-lg bg-yes/10 border border-yes/30">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-yes" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span class="text-yes">Market resolved successfully!</span>
+                            </div>
+                            <a href="/admin" class="inline-block mt-2 text-sm text-yes/70 hover:text-yes">
+                                Return to Dashboard →
+                            </a>
+                        </div>
+                        <div id="tx-error" class="hidden p-4 rounded-lg bg-no/10 border border-no/30">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-no" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span id="error-message" class="text-no">Transaction failed.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `) + `
+            </div>
+
+            <!-- View Market Link -->
+            <div class="text-center">
+                <a href="/market/` + market.id + `" class="text-gray-400 hover:text-white transition-colors text-sm">
+                    View Public Market Page →
+                </a>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirmation-modal"
+            class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div class="card-glass rounded-2xl p-6 md:p-8 max-w-md w-full" onclick="event.stopPropagation()">
+                <div class="text-center mb-6">
+                    <div id="modal-icon-yes"
+                        class="hidden mx-auto w-16 h-16 rounded-full bg-yes/20 flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-yes" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div id="modal-icon-no"
+                        class="hidden mx-auto w-16 h-16 rounded-full bg-no/20 flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-no" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Confirm Resolution</h3>
+                    <p class="text-gray-400 mb-4">
+                        You are about to resolve this market as <strong id="modal-outcome" class="text-white"></strong>.
+                    </p>
+                    <div class="p-3 bg-red-500/10 border border-red-500/30 rounded-lg mb-4">
+                        <p class="text-red-400 text-sm font-medium">
+                            ⚠️ This action is permanent and cannot be undone!
+                        </p>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                        Winners will be able to claim their payouts after this resolution.
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="hideConfirmation()"
+                        class="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all font-medium">
+                        Cancel
+                    </button>
+                    <button id="confirm-btn" onclick="confirmResolution()"
+                        class="flex-1 px-4 py-3 text-white rounded-xl transition-all font-medium">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const MARKET_ID = ` + market.id + `;
+            let selectedOutcome = null;
+
+            function showConfirmation(outcome) {
+                selectedOutcome = outcome;
+                const modal = document.getElementById('confirmation-modal');
+                const outcomeText = document.getElementById('modal-outcome');
+                const confirmBtn = document.getElementById('confirm-btn');
+                const iconYes = document.getElementById('modal-icon-yes');
+                const iconNo = document.getElementById('modal-icon-no');
+
+                if (outcome) {
+                    outcomeText.textContent = 'YES';
+                    outcomeText.className = 'text-yes';
+                    confirmBtn.className = 'flex-1 px-4 py-3 btn-yes text-white rounded-xl transition-all font-medium';
+                    iconYes.classList.remove('hidden');
+                    iconYes.classList.add('flex');
+                    iconNo.classList.add('hidden');
+                    iconNo.classList.remove('flex');
+                } else {
+                    outcomeText.textContent = 'NO';
+                    outcomeText.className = 'text-no';
+                    confirmBtn.className = 'flex-1 px-4 py-3 btn-no text-white rounded-xl transition-all font-medium';
+                    iconNo.classList.remove('hidden');
+                    iconNo.classList.add('flex');
+                    iconYes.classList.add('hidden');
+                    iconYes.classList.remove('flex');
+                }
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function hideConfirmation() {
+                const modal = document.getElementById('confirmation-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                selectedOutcome = null;
+            }
+
+            // Close modal on background click
+            document.getElementById('confirmation-modal').addEventListener('click', hideConfirmation);
+
+            async function confirmResolution() {
+                if (selectedOutcome === null) return;
+
+                hideConfirmation();
+
+                // Disable buttons
+                document.getElementById('resolve-yes-btn').disabled = true;
+                document.getElementById('resolve-no-btn').disabled = true;
+
+                try {
+                    // Get transaction data from server
+                    const response = await fetch('/api/admin/tx/resolve-market', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-wallet-address': window.walletAddress,
+                        },
+                        body: JSON.stringify({
+                            marketId: MARKET_ID,
+                            outcome: selectedOutcome,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to build transaction');
+                    }
+
+                    // Send transaction using wallet
+                    const txHash = await window.wallet.signTransaction(data.transaction);
+
+                    if (!txHash) {
+                        throw new Error('Transaction was cancelled');
+                    }
+
+                    // Show pending status
+                    document.getElementById('tx-status').classList.remove('hidden');
+                    document.getElementById('tx-pending').classList.remove('hidden');
+                    document.getElementById('tx-link').href = window.appConfig.blockExplorer + '/tx/' + txHash;
+
+                    // Wait for confirmation
+                    const receipt = await window.wallet.waitForReceipt(txHash);
+
+                    if (receipt.status !== '0x1' && receipt.status !== 1) {
+                        throw new Error('Transaction failed on-chain');
+                    }
+
+                    // Show success
+                    document.getElementById('tx-pending').classList.add('hidden');
+                    document.getElementById('tx-success').classList.remove('hidden');
+
+                } catch (error) {
+                    console.error('Resolve market error:', error);
+                    document.getElementById('tx-status').classList.remove('hidden');
+                    document.getElementById('tx-error').classList.remove('hidden');
+                    document.getElementById('error-message').textContent = error.message || 'Transaction failed';
+
+                    // Re-enable buttons
+                    document.getElementById('resolve-yes-btn').disabled = false;
+                    document.getElementById('resolve-no-btn').disabled = false;
+                }
+            }
+        </script>
+        ` }) %>

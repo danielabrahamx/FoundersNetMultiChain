@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= typeof title !=='undefined' ? title : 'FoundersNet - Prediction Markets for Startup Fundraises' %>
+    </title>
+    <meta name="description"
+        content="Permissionless prediction market for startup fundraises. Bet USDC on whether startups will raise their next round.">
+    <meta name="keywords" content="prediction market, startup, fundraise, crypto, polygon, betting">
+
+    <!-- HTMX 2.0.3 -->
+    <script src="https://unpkg.com/htmx.org@2.0.3"
+        integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq"
+        crossorigin="anonymous"></script>
+
+    <!-- Tailwind CSS 3.4 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'yes': '#22c55e',
+                        'yes-dark': '#16a34a',
+                        'no': '#ef4444',
+                        'no-dark': '#dc2626',
+                        'primary': '#6366f1',
+                        'primary-dark': '#4f46e5',
+                        'secondary': '#8b5cf6',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Wallet Integration -->
+    <script src="/wallet.js" defer></script>
+
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+        }
+
+        .card-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-glass:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen text-white flex flex-col">
+    <!-- Navigation Header -->
+    <nav
+        class="border-b border-white/10 px-4 py-4 sticky top-0 z-40 bg-gradient-to-b from-[#1e1b4b] to-transparent backdrop-blur-md">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <a href="/"
+                class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                FoundersNet
+            </a>
+            <div class="flex items-center gap-2 sm:gap-4">
+                <a href="/my-bets"
+                    class="text-gray-300 hover:text-white transition-colors text-sm sm:text-base px-2 py-1">My Bets</a>
+                <div id="network-status"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                    <span class="w-2 h-2 rounded-full bg-gray-500" id="network-dot"></span>
+                    <span class="text-xs text-gray-400" id="network-label">
+                        <%= network %>
+                    </span>
+                </div>
+                <button id="connect-wallet-btn" onclick="connectWallet()"
+                    class="px-4 py-2 btn-primary text-white rounded-lg transition-all font-medium text-sm sm:text-base">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <span class="hidden sm:inline">Connect Wallet</span>
+                        <span class="sm:hidden">Connect</span>
+                    </span>
+                </button>
+                <div id="wallet-connected" class="hidden items-center gap-2">
+                    <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                        <span class="text-yes text-xs">●</span>
+                        <span id="wallet-address-display" class="text-sm font-mono text-gray-300"></span>
+                    </div>
+                    <button onclick="disconnectWallet()" class="p-2 text-gray-400 hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+        <div class="min-h-[60vh] flex flex-col items-center justify-center px-4">
+            <!-- Admin Mode Banner -->
+            <div class="w-full max-w-md mb-8">
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
+                    <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <h2 class="font-semibold text-yellow-400">Admin Access Required</h2>
+                        <p class="text-sm text-yellow-200/70">This area is restricted to the admin wallet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login Card -->
+            <div class="w-full max-w-md card-glass rounded-2xl p-8">
+                <div class="text-center mb-8">
+                    <div
+                        class="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold mb-2">Admin Panel</h1>
+                    <p class="text-gray-400">Connect your admin wallet to continue.</p>
+                </div>
+
+                <!-- Admin Address Display -->
+                <div class="mb-6">
+                    <label class="block text-xs text-gray-400 mb-2">Required Admin Wallet</label>
+                    <div class="bg-black/30 rounded-lg p-3 font-mono text-sm text-gray-300 break-all">
+                        <%= adminAddress %>
+                    </div>
+                </div>
+
+                <!-- Connect Wallet Button -->
+                <button id="admin-connect-btn" onclick="connectWallet()" class="w-full px-6 py-4 btn-primary text-white rounded-xl transition-all font-medium text-lg
+                       focus:ring-2 focus:ring-primary/50 focus:outline-none
+                       hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98]">
+                    <span class="flex items-center justify-center gap-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        Connect Admin Wallet
+                    </span>
+                </button>
+
+                <!-- Connected but not admin state -->
+                <div id="wrong-wallet-message" class="hidden mt-6">
+                    <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+                        <p class="text-red-400 text-sm text-center">
+                            <strong>Access Denied:</strong> Your connected wallet is not the admin wallet.
+                        </p>
+                        <p class="text-red-400/70 text-xs text-center mt-2">
+                            Please disconnect and connect with the admin wallet.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to home link -->
+            <a href="/" class="mt-6 text-gray-400 hover:text-white transition-colors text-sm">
+                ← Back to FoundersNet
+            </a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 px-4 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto text-center text-gray-400 text-sm">
+            <p>FoundersNet &copy; <%= new Date().getFullYear() %> — Permissionless prediction markets for startup
+                    fundraises</p>
+        </div>
+    </footer>
+
+    <!-- Global Configuration -->
+    <script>
+        window.appConfig = {
+            network: '<%= network %>',
+            chainId: <%= typeof chainId !== 'undefined' ? chainId : 31337 %>,
+            contractAddress: '<%= typeof contractAddress !== "undefined" ? contractAddress : "" %>',
+            usdcAddress: '<%= typeof usdcAddress !== "undefined" ? usdcAddress : "" %>',
+            adminAddress: '<%= typeof adminAddress !== "undefined" ? adminAddress : "" %>',
+            blockExplorer: '<%= typeof blockExplorer !== "undefined" ? blockExplorer : "" %>',
+            rpcUrl: '<%= typeof rpcUrl !== "undefined" ? rpcUrl : "http://127.0.0.1:8545" %>'
+        };
+
+        window.walletAddress = null;
+        window.chainId = null;
+        window.isAdmin = false;
+
+        // Track if we're already navigating to admin (prevent multiple requests)
+        let isNavigatingToAdmin = false;
+
+        /**
+         * Navigate to admin dashboard with proper authentication header.
+         * Uses fetch with x-wallet-address header since the server validates against this.
+         * @param {string} address - The wallet address to authenticate with
+         */
+        async function navigateToAdminDashboard(address) {
+            if (isNavigatingToAdmin) return;
+            isNavigatingToAdmin = true;
+
+            try {
+                const response = await fetch('/admin', {
+                    method: 'GET',
+                    headers: {
+                        'x-wallet-address': address,
+                        'Accept': 'text/html'
+                    }
+                });
+
+                if (response.ok) {
+                    const html = await response.text();
+                    // Replace entire document with admin dashboard
+                    document.open();
+                    document.write(html);
+                    document.close();
+                    // Update browser URL without adding to history
+                    history.replaceState(null, '', '/admin');
+                } else {
+                    console.error('Failed to load admin dashboard:', response.status);
+                    isNavigatingToAdmin = false;
+                }
+            } catch (error) {
+                console.error('Error navigating to admin:', error);
+                isNavigatingToAdmin = false;
+            }
+        }
+
+        // Listen for wallet connection and redirect if admin
+        document.addEventListener('wallet:connected', function (event) {
+            const address = event.detail.address;
+            if (address && address.toLowerCase() === window.appConfig.adminAddress.toLowerCase()) {
+                // Navigate to admin with proper header authentication
+                navigateToAdminDashboard(address);
+            } else {
+                // Show wrong wallet message
+                document.getElementById('wrong-wallet-message').classList.remove('hidden');
+            }
+        });
+
+        // Check on page load if already connected (via wallet.js restore)
+        // Note: This runs before wallet.js initialization completes, so we also
+        // rely on the wallet:connected event above for restored sessions
+        document.addEventListener('DOMContentLoaded', function () {
+            // Small delay to allow wallet.js to restore session and set window.walletAddress
+            setTimeout(function () {
+                if (window.wallet && window.wallet.address) {
+                    const address = window.wallet.address;
+                    if (address.toLowerCase() === window.appConfig.adminAddress.toLowerCase()) {
+                        navigateToAdminDashboard(address);
+                    } else {
+                        document.getElementById('wrong-wallet-message').classList.remove('hidden');
+                    }
+                }
+            }, 100);
+        });
+    </script>
+</body>
+
+</html>

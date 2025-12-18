@@ -1,0 +1,73 @@
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+&lt;meta charset="UTF-8"&gt;
+&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+&lt;title&gt;FoundersNet - Prediction Markets for Startup Fundraises&lt;/title&gt;
+&lt;meta name="description" content="Permissionless parimutuel prediction market for startup fundraises on Polygon"&gt;
+&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;
+&lt;link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+rel="stylesheet"&gt;
+&lt;link rel="stylesheet" href="/src/styles/main.css"&gt;
+&lt;/head&gt;
+&lt;body class="bg-gray-50 font-sans"&gt;
+&lt;div id="app"&gt;
+&lt;!-- Header --&gt;
+&lt;header class="bg-white shadow-sm border-b border-gray-200"&gt;
+&lt;div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"&gt;
+&lt;div class="flex items-center justify-between"&gt;
+&lt;div&gt;
+&lt;h1 class="text-3xl font-bold text-primary-600"&gt;FoundersNet&lt;/h1&gt;
+&lt;p class="text-sm text-gray-600"&gt;Prediction Markets for Startup Fundraises&lt;/p&gt;
+&lt;/div&gt;
+&lt;div&gt;
+&lt;button
+id="connect-wallet"
+class="bg-primary-500 hover:bg-primary-600 text-white font-medium px-6 py-2 rounded-lg transition-colors"&gt;
+Connect Wallet
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/header&gt;
+
+&lt;!-- Main Content --&gt;
+&lt;main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"&gt;
+&lt;section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6"&gt;
+&lt;h2 class="text-2xl font-semibold text-gray-900 mb-4"&gt;Welcome to FoundersNet&lt;/h2&gt;
+&lt;p class="text-gray-700 mb-4"&gt;
+A permissionless, parimutuel prediction market for startup fundraises built on Polygon.
+&lt;/p&gt;
+&lt;div class="bg-blue-50 border border-blue-200 rounded-lg p-4"&gt;
+&lt;p class="text-sm text-blue-900"&gt;
+&lt;strong&gt;Network:&lt;/strong&gt; Polygon Amoy Testnet
+&lt;/p&gt;
+&lt;p class="text-sm text-blue-900 mt-1"&gt;
+&lt;strong&gt;Status:&lt;/strong&gt; Project scaffolding - application logic will be implemented in development phase
+&lt;/p&gt;
+&lt;/div&gt;
+&lt;/section&gt;
+
+&lt;!-- Markets List (placeholder) --&gt;
+&lt;section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"&gt;
+&lt;h3 class="text-xl font-semibold text-gray-900 mb-4"&gt;Active Markets&lt;/h3&gt;
+&lt;p class="text-gray-600"&gt;Markets will appear here once the application is deployed.&lt;/p&gt;
+&lt;/section&gt;
+&lt;/main&gt;
+
+&lt;!-- Footer --&gt;
+&lt;footer class="bg-white border-t border-gray-200 mt-12"&gt;
+&lt;div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-gray-600"&gt;
+&lt;p&gt;FoundersNet - Built on Polygon&lt;/p&gt;
+&lt;/div&gt;
+&lt;/footer&gt;
+&lt;/div&gt;
+
+&lt;!-- HTMX --&gt;
+&lt;script src="https://unpkg.com/htmx.org@2.0.3"&gt;&lt;/script&gt;
+
+&lt;!-- Application Scripts --&gt;
+&lt;script type="module" src="/src/main.ts"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;

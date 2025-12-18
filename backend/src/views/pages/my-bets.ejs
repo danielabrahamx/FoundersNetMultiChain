@@ -1,0 +1,64 @@
+<%- include('../layouts/main', { body: ` <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">My Bets</h1>
+        <p class="text-gray-400">Track your positions across all markets</p>
+    </div>
+
+    <!-- Wallet Check -->
+    <div id="my-bets-content">
+        <!-- Initial loading state - replaced by HTMX -->
+        <div class="text-center py-12">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Connect Your Wallet</h3>
+            <p class="text-gray-400 text-sm mb-4">
+                Connect your wallet to view your betting history and positions.
+            </p>
+            <button onclick="connectWallet()"
+                class="px-6 py-2.5 btn-primary text-white rounded-lg font-medium transition-all focus:ring-2 focus:ring-primary/50 focus:outline-none">
+                Connect Wallet
+            </button>
+        </div>
+    </div>
+
+    <!-- HTMX: Load user bets when wallet is connected -->
+    <div id="user-bets-container" hx-get="/my-bets/list" hx-trigger="load delay:100ms" hx-swap="innerHTML"
+        class="hidden">
+    </div>
+
+    <script>
+        // Check wallet and load bets
+        function loadUserBets() {
+            if (window.walletAddress) {
+                document.getElementById('my-bets-content').classList.add('hidden');
+                const container = document.getElementById('user-bets-container');
+                container.classList.remove('hidden');
+                htmx.trigger(container, 'load');
+            } else {
+                document.getElementById('my-bets-content').classList.remove('hidden');
+                document.getElementById('user-bets-container').classList.add('hidden');
+            }
+        }
+
+        // On page load
+        document.addEventListener('DOMContentLoaded', loadUserBets);
+
+        // On wallet connect
+        const myBetsOnWalletConnected = window.onWalletConnected;
+        window.onWalletConnected = async function (address) {
+            await myBetsOnWalletConnected(address);
+            loadUserBets();
+        };
+
+        // On wallet disconnect
+        const myBetsDisconnectWallet = window.disconnectWallet;
+        window.disconnectWallet = function () {
+            myBetsDisconnectWallet();
+            loadUserBets();
+        };
+    </script>
+    ` }) %>

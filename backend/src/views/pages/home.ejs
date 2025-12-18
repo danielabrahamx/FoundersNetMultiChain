@@ -1,0 +1,189 @@
+<%- include('../layouts/main', { body: ` <!-- Hero Section -->
+    <section class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+            Prediction Markets for
+            <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Startup Fundraises
+            </span>
+        </h1>
+        <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-8">
+            Bet on whether startups will successfully raise their next round.
+            Permissionless, transparent, on-chain.
+        </p>
+
+        <!-- Call to Action Buttons -->
+        <div class="flex flex-wrap justify-center gap-4">
+            <!-- Connect Wallet CTA (shown when not connected) -->
+            <button id="cta-connect-wallet" onclick="connectWallet()"
+                class="px-6 py-3 btn-primary text-white rounded-lg font-semibold transition-all focus:ring-2 focus:ring-primary/50 focus:outline-none flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                Connect Wallet to Start Betting
+            </button>
+
+            <!-- Create Market Button (admin only) -->
+            <a href="/admin/create-market" id="create-market-btn"
+                class="hidden admin-only px-6 py-3 bg-secondary hover:bg-secondary/80 text-white rounded-lg font-semibold transition-all focus:ring-2 focus:ring-secondary/50 focus:outline-none flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Create Market
+            </a>
+        </div>
+    </section>
+
+    ` + (typeof errorMessage !== 'undefined' && errorMessage ? `
+    <!-- Error Message -->
+    <div class="bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-8" role="alert">
+        <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clip-rule="evenodd" />
+            </svg>
+            <p class="text-red-200">` + errorMessage + `</p>
+        </div>
+    </div>
+    ` : '') + `
+
+    <!-- Markets Section -->
+    <section aria-labelledby="markets-heading">
+        <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+            <h2 id="markets-heading" class="text-2xl font-bold">Active Markets</h2>
+
+            <div class="flex items-center gap-4">
+                <!-- Auto-refresh indicator -->
+                <span class="text-xs text-gray-500 flex items-center gap-1">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    Auto-refreshes every 10s
+                </span>
+
+                <!-- Manual refresh button -->
+                <button hx-get="/markets" hx-target="#markets-container" hx-swap="innerHTML"
+                    hx-indicator="#refresh-indicator"
+                    class="text-primary hover:text-primary/80 flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    aria-label="Refresh markets list">
+                    <svg id="refresh-indicator" class="w-4 h-4 htmx-indicator spinner" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span class="text-sm">Refresh</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Markets Container with Auto-Refresh -->
+        <div id="markets-container" hx-get="/markets" hx-trigger="every 10s" hx-swap="innerHTML">
+            ` + (typeof markets !== 'undefined' ? include('../partials/markets-list', { markets: markets, network:
+            network }) : '<div class="text-gray-400 animate-pulse">Loading markets...</div>') + `
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="mt-16" aria-labelledby="how-it-works-heading">
+        <h2 id="how-it-works-heading" class="text-2xl font-bold mb-8 text-center">How It Works</h2>
+        <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <article class="card-glass rounded-xl p-6 text-center">
+                <div class="text-4xl mb-4" aria-hidden="true">🔗</div>
+                <h3 class="text-lg font-semibold mb-2">1. Connect Wallet</h3>
+                <p class="text-gray-400 text-sm">
+                    Connect your MetaMask, Rainbow, or any EVM-compatible wallet. Your wallet is your identity — no
+                    signup required.
+                </p>
+            </article>
+
+            <article class="card-glass rounded-xl p-6 text-center">
+                <div class="text-4xl mb-4" aria-hidden="true">📊</div>
+                <h3 class="text-lg font-semibold mb-2">2. Place Your Bets</h3>
+                <p class="text-gray-400 text-sm">
+                    Choose YES or NO on any market and bet USDC. All bets are pooled together using the parimutuel
+                    model.
+                </p>
+            </article>
+
+            <article class="card-glass rounded-xl p-6 text-center">
+                <div class="text-4xl mb-4" aria-hidden="true">💰</div>
+                <h3 class="text-lg font-semibold mb-2">3. Claim Winnings</h3>
+                <p class="text-gray-400 text-sm">
+                    When markets resolve, winners split the entire pool proportionally. Claim your USDC payout anytime.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="mt-16" aria-labelledby="features-heading">
+        <h2 id="features-heading" class="sr-only">Features</h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="card-glass rounded-xl p-4 flex items-center gap-3">
+                <span class="text-2xl">🔐</span>
+                <div>
+                    <p class="font-semibold text-sm">Non-Custodial</p>
+                    <p class="text-gray-400 text-xs">Your keys, your funds</p>
+                </div>
+            </div>
+
+            <div class="card-glass rounded-xl p-4 flex items-center gap-3">
+                <span class="text-2xl">⚡</span>
+                <div>
+                    <p class="font-semibold text-sm">Low Gas on Polygon</p>
+                    <p class="text-gray-400 text-xs">~$0.01 per transaction</p>
+                </div>
+            </div>
+
+            <div class="card-glass rounded-xl p-4 flex items-center gap-3">
+                <span class="text-2xl">🌐</span>
+                <div>
+                    <p class="font-semibold text-sm">Permissionless</p>
+                    <p class="text-gray-400 text-xs">Open to everyone</p>
+                </div>
+            </div>
+
+            <div class="card-glass rounded-xl p-4 flex items-center gap-3">
+                <span class="text-2xl">📖</span>
+                <div>
+                    <p class="font-semibold text-sm">Fully Transparent</p>
+                    <p class="text-gray-400 text-xs">All data on-chain</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Show CTA connect button only when wallet not connected
+        function updateHeroCTA() {
+            const ctaBtn = document.getElementById('cta-connect-wallet');
+            const createBtn = document.getElementById('create-market-btn');
+
+            if (window.walletAddress) {
+                ctaBtn.classList.add('hidden');
+            } else {
+                ctaBtn.classList.remove('hidden');
+            }
+
+            // Show create market button for admin
+            if (window.isAdmin) {
+                createBtn.classList.remove('hidden');
+            }
+        }
+
+        // Run on page load and when wallet state changes
+        document.addEventListener('DOMContentLoaded', updateHeroCTA);
+
+        // Listen for wallet connection events (from main layout)
+        const originalOnWalletConnected = window.onWalletConnected;
+        window.onWalletConnected = async function (address) {
+            await originalOnWalletConnected(address);
+            updateHeroCTA();
+        };
+
+        const originalDisconnectWallet = window.disconnectWallet;
+        window.disconnectWallet = function () {
+            originalDisconnectWallet();
+            updateHeroCTA();
+        };
+    </script>
+    ` }) %>

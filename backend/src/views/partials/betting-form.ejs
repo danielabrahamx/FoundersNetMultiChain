@@ -1,0 +1,284 @@
+<% if (!market.isOpen) { %>
+    <!-- Market Closed State -->
+    <div class="text-center py-8">
+        <% if (market.isResolved) { %>
+            <!-- Resolved Market -->
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/20 mb-4">
+                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-blue-400 mb-2">Market Resolved</h3>
+            <p class="text-gray-400 mb-4">
+                This market has been resolved with outcome:
+                <span class="font-bold <%= market.outcomeLabel === 'YES' ? 'text-yes' : 'text-no' %>">
+                    <%= market.outcomeLabel %>
+                </span>
+            </p>
+            <p class="text-gray-500 text-sm">Check "Your Position" to claim any winnings.</p>
+            <% } else { %>
+                <!-- Awaiting Resolution -->
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-500/20 mb-4">
+                    <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-yellow-400 mb-2">Betting Closed</h3>
+                <p class="text-gray-400">
+                    This market is closed and awaiting resolution by the admin.
+                </p>
+                <% } %>
+    </div>
+    <% } else { %>
+        <!-- Betting Form -->
+        <form id="bet-form" class="space-y-5" aria-label="Place a bet on this market">
+            <!-- Outcome Selection -->
+            <fieldset>
+                <legend class="block text-sm text-gray-400 mb-3">Choose Your Prediction</legend>
+                <div class="grid grid-cols-2 gap-4" role="radiogroup" aria-label="Select outcome">
+                    <!-- YES Button -->
+                    <button type="button" id="btn-yes" onclick="selectOutcome(true)"
+                        class="relative py-4 rounded-xl border-2 border-yes/40 bg-yes/10 hover:bg-yes/20 text-yes font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yes/50"
+                        role="radio" aria-checked="false" aria-label="Bet on YES">
+                        <span class="text-2xl block mb-1">YES</span>
+                        <span class="text-xs text-yes/70">
+                            <%= market.yesPercentage.toFixed(1) %>% implied
+                        </span>
+                    </button>
+
+                    <!-- NO Button -->
+                    <button type="button" id="btn-no" onclick="selectOutcome(false)"
+                        class="relative py-4 rounded-xl border-2 border-no/40 bg-no/10 hover:bg-no/20 text-no font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-no/50"
+                        role="radio" aria-checked="false" aria-label="Bet on NO">
+                        <span class="text-2xl block mb-1">NO</span>
+                        <span class="text-xs text-no/70">
+                            <%= market.noPercentage.toFixed(1) %>% implied
+                        </span>
+                    </button>
+                </div>
+            </fieldset>
+
+            <!-- Amount Input -->
+            <div>
+                <label for="bet-amount" class="block text-sm text-gray-400 mb-2">Bet Amount (USDC)</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
+                    <input type="number" id="bet-amount" name="amount" min="1" step="0.01" placeholder="10.00"
+                        onkeyup="validateAmount()" oninput="validateAmount()"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-16 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-lg"
+                        aria-describedby="amount-help" />
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">USDC</span>
+                </div>
+                <p id="amount-help" class="text-xs text-gray-500 mt-2">
+                    Minimum bet: 1 USDC
+                </p>
+                <p id="amount-error" class="text-xs text-red-400 mt-1 hidden"></p>
+            </div>
+
+            <!-- Quick Amount Buttons -->
+            <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="setAmount(5)"
+                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                    $5
+                </button>
+                <button type="button" onclick="setAmount(10)"
+                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                    $10
+                </button>
+                <button type="button" onclick="setAmount(25)"
+                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                    $25
+                </button>
+                <button type="button" onclick="setAmount(50)"
+                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                    $50
+                </button>
+                <button type="button" onclick="setAmount(100)"
+                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                    $100
+                </button>
+            </div>
+
+            <!-- Place Bet Button -->
+            <button type="button" id="place-bet-btn" onclick="placeBet()"
+                class="w-full py-4 btn-primary text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                disabled aria-disabled="true">
+                <span id="bet-btn-text">Select an outcome</span>
+                <svg id="bet-btn-spinner" class="w-5 h-5 spinner hidden" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </button>
+
+            <!-- Status Message -->
+            <div id="bet-status" class="hidden" role="alert" aria-live="polite"></div>
+        </form>
+
+        <script>
+            let selectedOutcome = null;
+            const marketId = <%= market.id %>;
+
+            function selectOutcome(outcome) {
+                selectedOutcome = outcome;
+
+                const yesBtn = document.getElementById('btn-yes');
+                const noBtn = document.getElementById('btn-no');
+                const placeBtn = document.getElementById('place-bet-btn');
+                const btnText = document.getElementById('bet-btn-text');
+
+                // Reset both buttons
+                yesBtn.classList.remove('ring-2', 'ring-yes', 'bg-yes/30', 'scale-105');
+                noBtn.classList.remove('ring-2', 'ring-no', 'bg-no/30', 'scale-105');
+                yesBtn.setAttribute('aria-checked', 'false');
+                noBtn.setAttribute('aria-checked', 'false');
+
+                if (outcome === true) {
+                    yesBtn.classList.add('ring-2', 'ring-yes', 'bg-yes/30', 'scale-105');
+                    yesBtn.setAttribute('aria-checked', 'true');
+                    placeBtn.classList.remove('btn-primary', 'btn-no');
+                    placeBtn.classList.add('btn-yes');
+                    btnText.textContent = 'Place YES Bet';
+                } else {
+                    noBtn.classList.add('ring-2', 'ring-no', 'bg-no/30', 'scale-105');
+                    noBtn.setAttribute('aria-checked', 'true');
+                    placeBtn.classList.remove('btn-primary', 'btn-yes');
+                    placeBtn.classList.add('btn-no');
+                    btnText.textContent = 'Place NO Bet';
+                }
+
+                validateForm();
+            }
+
+            function setAmount(value) {
+                document.getElementById('bet-amount').value = value;
+                validateAmount();
+            }
+
+            function validateAmount() {
+                const amount = parseFloat(document.getElementById('bet-amount').value);
+                const errorEl = document.getElementById('amount-error');
+
+                if (isNaN(amount) || amount < 1) {
+                    if (document.getElementById('bet-amount').value !== '') {
+                        errorEl.textContent = 'Minimum bet is 1 USDC';
+                        errorEl.classList.remove('hidden');
+                    }
+                } else {
+                    errorEl.classList.add('hidden');
+                }
+
+                validateForm();
+            }
+
+            function validateForm() {
+                const amount = parseFloat(document.getElementById('bet-amount').value);
+                const placeBtn = document.getElementById('place-bet-btn');
+                const isValid = selectedOutcome !== null && !isNaN(amount) && amount >= 1;
+
+                placeBtn.disabled = !isValid;
+                placeBtn.setAttribute('aria-disabled', !isValid);
+            }
+
+            async function placeBet() {
+                if (selectedOutcome === null) {
+                    showStatus('Please select YES or NO', 'error');
+                    return;
+                }
+
+                const amount = document.getElementById('bet-amount').value;
+                if (!amount || parseFloat(amount) < 1) {
+                    showStatus('Minimum bet is 1 USDC', 'error');
+                    return;
+                }
+
+                if (!window.walletAddress) {
+                    showStatus('Please connect your wallet first', 'error');
+                    return;
+                }
+
+                const placeBtn = document.getElementById('place-bet-btn');
+                const btnText = document.getElementById('bet-btn-text');
+                const spinner = document.getElementById('bet-btn-spinner');
+
+                try {
+                    placeBtn.disabled = true;
+                    spinner.classList.remove('hidden');
+                    btnText.textContent = 'Building transaction...';
+                    showStatus('Preparing transaction...', 'info');
+
+                    // Get unsigned transaction from API
+                    const response = await fetch('/api/tx/bet', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            marketId: marketId,
+                            outcome: selectedOutcome,
+                            amount: amount
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        showStatus(data.error || 'Failed to build transaction', 'error');
+                        resetButton();
+                        return;
+                    }
+
+                    btnText.textContent = 'Approve in wallet...';
+                    showStatus('Please approve the transaction in your wallet', 'info');
+
+                    // Transaction ready - wallet integration will handle signing
+                    console.log('Transaction ready:', data.transaction);
+
+                    // Here you would use viem to send the transaction
+                    // For now, show success message
+                    showStatus('Transaction built! Implement wallet signing to complete.', 'success');
+                    resetButton();
+
+                } catch (error) {
+                    console.error('Bet error:', error);
+                    showStatus('Failed to place bet: ' + error.message, 'error');
+                    resetButton();
+                }
+            }
+
+            function resetButton() {
+                const placeBtn = document.getElementById('place-bet-btn');
+                const btnText = document.getElementById('bet-btn-text');
+                const spinner = document.getElementById('bet-btn-spinner');
+
+                spinner.classList.add('hidden');
+                btnText.textContent = selectedOutcome === true ? 'Place YES Bet' :
+                    selectedOutcome === false ? 'Place NO Bet' : 'Select an outcome';
+                placeBtn.disabled = false;
+            }
+
+            function showStatus(message, type) {
+                const status = document.getElementById('bet-status');
+                status.classList.remove('hidden', 'text-red-400', 'text-green-400', 'text-gray-400', 'bg-red-500/10', 'bg-green-500/10', 'bg-white/5');
+
+                let bgClass = 'bg-white/5';
+                let textClass = 'text-gray-400';
+                let icon = '';
+
+                if (type === 'error') {
+                    bgClass = 'bg-red-500/10';
+                    textClass = 'text-red-400';
+                    icon = '<svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
+                } else if (type === 'success') {
+                    bgClass = 'bg-green-500/10';
+                    textClass = 'text-green-400';
+                    icon = '<svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
+                } else {
+                    icon = '<svg class="w-4 h-4 flex-shrink-0 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>';
+                }
+
+                status.className = `flex items-center gap-2 p-3 rounded-lg text-sm ${bgClass} ${textClass}`;
+                status.innerHTML = icon + '<span>' + message + '</span>';
+            }
+        </script>
+        <% } %>

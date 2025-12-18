@@ -1,0 +1,192 @@
+<% if (!position.hasBets) { %>
+    <!-- No Bets State -->
+    <div class="text-center py-6">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 mb-4">
+            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <p class="text-gray-400 mb-2">You haven't placed any bets on this market yet.</p>
+        <% if (market.isOpen) { %>
+            <p class="text-gray-500 text-sm">Use the form to place your first bet!</p>
+            <% } %>
+    </div>
+    <% } else { %>
+        <div class="space-y-4">
+            <!-- Position Summary -->
+            <% if (parseFloat(position.yesBetsFormatted)> 0) { %>
+                <div class="bg-yes/10 border border-yes/30 rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 bg-yes rounded-full"></span>
+                            <span class="text-yes font-semibold text-lg">YES</span>
+                        </div>
+                        <span class="text-white text-lg font-bold">$<%= position.yesBetsFormatted %> USDC</span>
+                    </div>
+                </div>
+                <% } %>
+
+                    <% if (parseFloat(position.noBetsFormatted)> 0) { %>
+                        <div class="bg-no/10 border border-no/30 rounded-xl p-4">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 bg-no rounded-full"></span>
+                                    <span class="text-no font-semibold text-lg">NO</span>
+                                </div>
+                                <span class="text-white text-lg font-bold">$<%= position.noBetsFormatted %> USDC</span>
+                            </div>
+                        </div>
+                        <% } %>
+
+                            <!-- Total Line -->
+                            <div class="pt-3 border-t border-white/10">
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-400">Total Position</span>
+                                    <span class="text-white font-bold text-lg">$<%= position.totalBets %> USDC</span>
+                                </div>
+                            </div>
+
+                            <!-- Status Cards -->
+                            <% if (position.isWinner !==null) { %>
+                                <% if (position.isWinner && !position.claimed) { %>
+                                    <!-- Winner - Claim Available -->
+                                    <div class="bg-gradient-to-r from-green-500/20 to-green-600/10 border border-green-500/40 rounded-xl p-5 text-center"
+                                        role="alert">
+                                        <div
+                                            class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-500/20 mb-3">
+                                            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-green-400 font-bold text-lg mb-1">🎉 You Won!</p>
+                                        <p class="text-gray-300 mb-4">
+                                            Claimable: <span class="text-green-400 font-bold text-xl">$<%=
+                                                    position.claimableAmount %> USDC</span>
+                                        </p>
+                                        <button id="claim-btn" onclick="claimPayout(<%= position.marketId %>)"
+                                            class="w-full py-3 btn-yes text-white rounded-xl font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-yes/50 flex items-center justify-center gap-2">
+                                            <span id="claim-btn-text">Claim Payout</span>
+                                            <svg id="claim-spinner" class="w-5 h-5 spinner hidden" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <% } else if (position.isWinner && position.claimed) { %>
+                                        <!-- Already Claimed -->
+                                        <div
+                                            class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 text-center">
+                                            <div
+                                                class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-500/20 mb-3">
+                                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                            <p class="text-blue-400 font-semibold">✓ Payout Claimed</p>
+                                            <p class="text-gray-400 text-sm mt-1">Your winnings have been transferred to
+                                                your wallet.</p>
+                                        </div>
+
+                                        <% } else { %>
+                                            <!-- Lost Bet -->
+                                            <div
+                                                class="bg-red-500/10 border border-red-500/30 rounded-xl p-5 text-center">
+                                                <div
+                                                    class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500/20 mb-3">
+                                                    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <p class="text-red-400 font-semibold">This bet did not win</p>
+                                                <p class="text-gray-400 text-sm mt-1">Better luck next time!</p>
+                                            </div>
+                                            <% } %>
+
+                                                <% } else if (market.isClosed) { %>
+                                                    <!-- Awaiting Resolution -->
+                                                    <div
+                                                        class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-5 text-center">
+                                                        <div
+                                                            class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-yellow-500/20 mb-3">
+                                                            <svg class="w-6 h-6 text-yellow-400" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                        </div>
+                                                        <p class="text-yellow-400 font-semibold">Awaiting Resolution</p>
+                                                        <p class="text-gray-400 text-sm mt-1">The market outcome will be
+                                                            determined soon.</p>
+                                                    </div>
+                                                    <% } %>
+        </div>
+
+        <!-- Claim Script -->
+        <script>
+            async function claimPayout(marketId) {
+                if (!window.walletAddress) {
+                    alert('Please connect your wallet first');
+                    return;
+                }
+
+                const btn = document.getElementById('claim-btn');
+                const btnText = document.getElementById('claim-btn-text');
+                const spinner = document.getElementById('claim-spinner');
+
+                try {
+                    btn.disabled = true;
+                    spinner.classList.remove('hidden');
+                    btnText.textContent = 'Building transaction...';
+
+                    const response = await fetch('/api/tx/claim', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ marketId })
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        alert(data.error || 'Failed to build claim transaction');
+                        resetClaimButton();
+                        return;
+                    }
+
+                    btnText.textContent = 'Approve in wallet...';
+                    console.log('Claim transaction ready:', data.transaction);
+
+                    // Wallet integration will handle signing
+                    // For now, show success message
+                    alert('Transaction built! Implement wallet signing to complete claim.');
+                    resetClaimButton();
+
+                } catch (error) {
+                    console.error('Claim error:', error);
+                    alert('Failed to claim: ' + error.message);
+                    resetClaimButton();
+                }
+            }
+
+            function resetClaimButton() {
+                const btn = document.getElementById('claim-btn');
+                const btnText = document.getElementById('claim-btn-text');
+                const spinner = document.getElementById('claim-spinner');
+
+                if (btn) btn.disabled = false;
+                if (btnText) btnText.textContent = 'Claim Payout';
+                if (spinner) spinner.classList.add('hidden');
+            }
+        </script>
+        <% } %>

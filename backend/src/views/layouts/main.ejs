@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= typeof title !=='undefined' ? title : 'FoundersNet - Prediction Markets for Startup Fundraises' %>
+    </title>
+    <meta name="description"
+        content="Permissionless prediction market for startup fundraises. Bet USDC on whether startups will raise their next round.">
+    <meta name="keywords" content="prediction market, startup, fundraise, crypto, polygon, betting">
+
+    <!-- HTMX 2.0.3 -->
+    <script src="https://unpkg.com/htmx.org@2.0.3"
+        integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq"
+        crossorigin="anonymous"></script>
+
+    <!-- Tailwind CSS 3.4 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'yes': '#22c55e',
+                        'yes-dark': '#16a34a',
+                        'no': '#ef4444',
+                        'no-dark': '#dc2626',
+                        'primary': '#6366f1',
+                        'primary-dark': '#4f46e5',
+                        'secondary': '#8b5cf6',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Wallet Integration (uses native browser APIs for EVM interactions) -->
+    <script src="/wallet.js" defer></script>
+
+    <style>
+        /* Custom gradient background */
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+        }
+
+        /* Glassmorphism cards */
+        .card-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-glass:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Gradient buttons */
+        .btn-yes {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .btn-yes:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        }
+
+        .btn-no {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .btn-no:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        }
+
+        /* HTMX loading indicators */
+        .htmx-indicator {
+            display: none;
+        }
+
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+
+        .htmx-request.htmx-indicator {
+            display: inline-block;
+        }
+
+        /* Spinner animation */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Network status indicator */
+        .network-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .network-dot.connected {
+            background: #22c55e;
+            box-shadow: 0 0 6px #22c55e;
+        }
+
+        .network-dot.disconnected {
+            background: #ef4444;
+        }
+
+        .network-dot.wrong-network {
+            background: #f59e0b;
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen text-white flex flex-col">
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content"
+        class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:z-50">
+        Skip to main content
+    </a>
+
+    <!-- Navigation Header -->
+    <nav class="border-b border-white/10 px-4 py-4 sticky top-0 z-40 bg-gradient-to-b from-[#1e1b4b] to-transparent backdrop-blur-md"
+        role="navigation" aria-label="Main navigation">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <!-- Logo -->
+            <a href="/"
+                class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+                aria-label="FoundersNet Home">
+                FoundersNet
+            </a>
+
+            <!-- Right side controls -->
+            <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
+                <!-- My Bets link -->
+                <a href="/my-bets"
+                    class="text-gray-300 hover:text-white transition-colors text-sm sm:text-base px-2 py-1">
+                    My Bets
+                </a>
+
+                <!-- Admin Panel link (hidden by default, shown via JS when admin wallet is connected) -->
+                <a id="admin-link" href="/admin"
+                    class="hidden items-center gap-1.5 text-yellow-400 hover:text-yellow-300 transition-colors text-sm sm:text-base px-2 py-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="hidden sm:inline">Admin</span>
+                </a>
+
+                <!-- Network Status Indicator -->
+                <div id="network-status"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10"
+                    role="status" aria-live="polite">
+                    <span class="network-dot disconnected" id="network-dot" aria-hidden="true"></span>
+                    <span class="text-xs text-gray-400" id="network-label">
+                        <%= network %>
+                    </span>
+                </div>
+
+                <!-- Wallet Connection UI -->
+                <div id="wallet-container" class="flex items-center gap-2">
+                    <!-- Disconnected state -->
+                    <button id="connect-wallet-btn" onclick="connectWallet()"
+                        class="px-4 py-2 btn-primary text-white rounded-lg transition-all font-medium text-sm sm:text-base focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                        aria-label="Connect your wallet">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            <span class="hidden sm:inline">Connect Wallet</span>
+                            <span class="sm:hidden">Connect</span>
+                        </span>
+                    </button>
+
+                    <!-- Connected state (hidden by default) -->
+                    <div id="wallet-connected" class="hidden items-center gap-2">
+                        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                            <span class="text-yes text-xs">●</span>
+                            <span id="wallet-address-display" class="text-sm font-mono text-gray-300"></span>
+                        </div>
+                        <button onclick="disconnectWallet()"
+                            class="p-2 text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 rounded-lg"
+                            aria-label="Disconnect wallet">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Network Warning Banner -->
+    <div id="network-warning" class="hidden bg-yellow-500/20 border-b border-yellow-500/30 px-4 py-3" role="alert">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+            <p class="text-yellow-200 text-sm">
+                <span class="font-semibold">Wrong Network:</span>
+                <span id="network-warning-message">Please switch to the correct network.</span>
+            </p>
+            <button onclick="switchNetwork()"
+                class="px-4 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500/50">
+                Switch Network
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-1 max-w-7xl mx-auto px-4 py-8 w-full" role="main">
+        <%- body %>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 px-4 py-6 mt-auto" role="contentinfo">
+        <div class="max-w-7xl mx-auto text-center text-gray-400 text-sm">
+            <p>FoundersNet &copy; <%= year %> — Permissionless prediction markets for startup fundraises</p>
+            <p class="mt-1">
+                Contract:
+                <a href="<%= typeof blockExplorer !== 'undefined' ? blockExplorer : '#' %>/address/<%= typeof contractAddress !== 'undefined' ? contractAddress : '' %>"
+                    target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
+                    <%= typeof contractAddress !=='undefined' && contractAddress ? contractAddress.slice(0, 8) + '...' +
+                        contractAddress.slice(-6) : 'Not deployed' %>
+                </a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Global Configuration (must be before wallet.js) -->
+    <script>
+        // Server-injected configuration
+        window.appConfig = {
+            network: '<%= network %>',
+            chainId: <%= typeof chainId !== 'undefined' ? chainId : 31337 %>,
+            contractAddress: '<%= typeof contractAddress !== "undefined" ? contractAddress : "" %>',
+            usdcAddress: '<%= typeof usdcAddress !== "undefined" ? usdcAddress : "" %>',
+            adminAddress: '<%= typeof adminAddress !== "undefined" ? adminAddress : "" %>',
+            blockExplorer: '<%= typeof blockExplorer !== "undefined" ? blockExplorer : "" %>',
+            rpcUrl: '<%= typeof rpcUrl !== "undefined" ? rpcUrl : "http://127.0.0.1:8545" %>'
+        };
+
+        // Global wallet state (managed by wallet.js)
+        window.walletAddress = null;
+        window.chainId = null;
+        window.isAdmin = false;
+    </script>
+
+    <!-- HTMX Integration Scripts -->
+    <script>
+        // Add wallet address to all HTMX requests
+        document.body.addEventListener('htmx:configRequest', function (event) {
+            if (window.walletAddress) {
+                event.detail.parameters['address'] = window.walletAddress;
+            }
+        });
+
+        // Show loading states during HTMX requests
+        document.body.addEventListener('htmx:beforeRequest', function (event) {
+            const indicator = event.target.querySelector('.htmx-indicator');
+            if (indicator) {
+                indicator.classList.add('spinner');
+            }
+        });
+
+        document.body.addEventListener('htmx:afterRequest', function (event) {
+            const indicator = event.target.querySelector('.htmx-indicator');
+            if (indicator) {
+                indicator.classList.remove('spinner');
+            }
+        });
+
+        // Handle HTMX errors
+        document.body.addEventListener('htmx:responseError', function (event) {
+            console.error('HTMX request failed:', event.detail);
+            if (typeof showToast === 'function') {
+                showToast('Failed to load data. Please try again.', 'error');
+            }
+        });
+
+        // Listen for wallet events to refresh HTMX content
+        document.addEventListener('wallet:connected', function (event) {
+            // Check if connected wallet is admin and show/hide admin link
+            const adminLink = document.getElementById('admin-link');
+            if (adminLink && event.detail && event.detail.address) {
+                const isAdmin = event.detail.address.toLowerCase() === window.appConfig.adminAddress.toLowerCase();
+                window.isAdmin = isAdmin;
+                if (isAdmin) {
+                    adminLink.classList.remove('hidden');
+                    adminLink.classList.add('flex');
+                } else {
+                    adminLink.classList.add('hidden');
+                    adminLink.classList.remove('flex');
+                }
+            }
+
+            // Refresh wallet-dependent content
+            if (typeof htmx !== 'undefined') {
+                const containers = ['#markets-container', '#user-position', '#betting-form', '#user-balance'];
+                containers.forEach(selector => {
+                    const el = document.querySelector(selector);
+                    if (el) htmx.trigger(el, 'load');
+                });
+            }
+        });
+
+        document.addEventListener('wallet:disconnected', function (event) {
+            // Hide admin link on disconnect
+            const adminLink = document.getElementById('admin-link');
+            if (adminLink) {
+                adminLink.classList.add('hidden');
+                adminLink.classList.remove('flex');
+            }
+            window.isAdmin = false;
+
+            // Refresh wallet-dependent content
+            if (typeof htmx !== 'undefined') {
+                const containers = ['#user-position', '#betting-form', '#user-balance'];
+                containers.forEach(selector => {
+                    const el = document.querySelector(selector);
+                    if (el) htmx.trigger(el, 'load');
+                });
+            }
+        });
+
+        document.addEventListener('wallet:transactionConfirmed', function (event) {
+            // Refresh all dynamic content after a transaction
+            if (typeof htmx !== 'undefined') {
+                const containers = ['#markets-container', '#user-position', '#user-balance'];
+                containers.forEach(selector => {
+                    const el = document.querySelector(selector);
+                    if (el) htmx.trigger(el, 'refresh');
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

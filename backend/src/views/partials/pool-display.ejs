@@ -1,0 +1,51 @@
+<!-- Pool Distribution Visualization -->
+<div class="grid grid-cols-2 gap-4 mb-6">
+    <!-- YES Pool -->
+    <div class="bg-yes/10 border border-yes/30 rounded-xl p-5 text-center transition-all hover:bg-yes/15">
+        <p class="text-yes text-4xl font-bold mb-1">
+            <%= market.yesPercentage.toFixed(1) %>%
+        </p>
+        <p class="text-gray-400 text-sm font-medium mb-2">YES Implied Odds</p>
+        <div class="flex items-center justify-center gap-2 text-gray-300">
+            <svg class="w-4 h-4 text-yes" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-lg font-semibold">$<%= market.yesPoolFormatted %></span>
+        </div>
+    </div>
+
+    <!-- NO Pool -->
+    <div class="bg-no/10 border border-no/30 rounded-xl p-5 text-center transition-all hover:bg-no/15">
+        <p class="text-no text-4xl font-bold mb-1">
+            <%= market.noPercentage.toFixed(1) %>%
+        </p>
+        <p class="text-gray-400 text-sm font-medium mb-2">NO Implied Odds</p>
+        <div class="flex items-center justify-center gap-2 text-gray-300">
+            <svg class="w-4 h-4 text-no" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-lg font-semibold">$<%= market.noPoolFormatted %></span>
+        </div>
+    </div>
+</div>
+
+<!-- Pool Bar Visualization -->
+<div class="mb-4">
+    <div class="h-4 bg-gray-700/50 rounded-full overflow-hidden flex" role="img"
+        aria-label="Pool distribution visualization">
+        <div class="bg-gradient-to-r from-yes to-yes-dark transition-all duration-700 ease-out"
+            style="width: <%= market.yesPercentage %>%"></div>
+        <div class="bg-gradient-to-r from-no-dark to-no transition-all duration-700 ease-out flex-1"></div>
+    </div>
+</div>
+
+<!-- Total Pool -->
+<div class="text-center bg-white/5 rounded-xl p-4">
+    <span class="text-gray-400 text-sm">Total Pool</span>
+    <div class="flex items-center justify-center gap-2 mt-1">
+        <span class="text-white text-xl font-bold">$<%= market.totalPool %></span>
+        <span class="text-gray-400 text-lg">USDC</span>
+    </div>
+</div>

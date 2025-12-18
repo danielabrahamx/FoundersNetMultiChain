@@ -1,0 +1,41 @@
+{
+  "name": "foundersnet-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FoundersNet - Permissionless prediction market for startup fundraises on Polygon",
+  "scripts": {
+    "install:all": "pnpm install",
+    "dev": "pnpm -r --parallel dev",
+    "dev:contracts": "pnpm --filter @foundersnet/contracts node",
+    "dev:backend": "pnpm --filter @foundersnet/backend dev",
+    "dev:frontend": "pnpm --filter @foundersnet/frontend dev",
+    "dev:all": "concurrently -k -n contracts,backend,frontend -c blue,green,magenta \"pnpm dev:contracts\" \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:contracts": "pnpm --filter @foundersnet/contracts test",
+    "test:contracts:coverage": "pnpm --filter @foundersnet/contracts test:coverage",
+    "test:contracts:gas": "pnpm --filter @foundersnet/contracts test:gas",
+    "test:integration": "pnpm --filter @foundersnet/contracts run test:integration",
+    "deploy:local": "pnpm --filter @foundersnet/contracts deploy:local",
+    "deploy:local:seed": "pnpm --filter @foundersnet/contracts run seed:local",
+    "clean": "pnpm -r clean",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{js,ts,json,md,sol}\"",
+    "setup": "pnpm install && pnpm setup:env",
+    "setup:env": "node scripts/setup-env.js",
+    "setup:check": "node scripts/check-prerequisites.js"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.15.0",
+    "prettier": "^3.3.0",
+    "prettier-plugin-solidity": "^1.4.1",
+    "husky": "^9.1.0",
+    "typescript": "^5.6.0"
+  }
+}

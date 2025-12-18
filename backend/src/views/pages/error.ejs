@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= typeof title !=='undefined' ? title : 'Error - FoundersNet' %>
+    </title>
+    <meta name="description" content="An error occurred">
+
+    <!-- Tailwind CSS 3.4 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'yes': '#22c55e',
+                        'no': '#ef4444',
+                        'primary': '#6366f1',
+                        'primary-dark': '#4f46e5',
+                        'secondary': '#8b5cf6',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+        }
+
+        .card-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen text-white flex flex-col">
+    <!-- Navigation Header -->
+    <nav
+        class="border-b border-white/10 px-4 py-4 sticky top-0 z-40 bg-gradient-to-b from-[#1e1b4b] to-transparent backdrop-blur-md">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <a href="/"
+                class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                FoundersNet
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+        <div class="max-w-lg mx-auto text-center py-16">
+            <!-- Error Icon -->
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-500/20 mb-8">
+                <svg class="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+
+            <!-- Error Message -->
+            <h1 class="text-3xl font-bold mb-4">Oops! Something went wrong</h1>
+            <p class="text-gray-400 text-lg mb-8">
+                <%= typeof errorMessage !=='undefined' ? errorMessage
+                    : 'An unexpected error occurred. Please try again.' %>
+            </p>
+
+            <!-- Actions -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/"
+                    class="inline-flex items-center justify-center gap-2 px-6 py-3 btn-primary text-white rounded-lg font-semibold transition-all focus:ring-2 focus:ring-primary/50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Go Home
+                </a>
+                <button onclick="history.back()"
+                    class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold transition-all focus:ring-2 focus:ring-white/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Go Back
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 px-4 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto text-center text-gray-400 text-sm">
+            <p>FoundersNet &copy; <%= new Date().getFullYear() %> — Permissionless prediction markets for startup
+                    fundraises</p>
+        </div>
+    </footer>
+</body>
+
+</html>
