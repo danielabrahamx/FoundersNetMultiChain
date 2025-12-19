@@ -94,38 +94,6 @@
             <% }); %>
     </div>
 
-    <script>
-        // Claim payout function
-        async function claimPayout(marketId) {
-            if (!window.walletAddress) {
-                alert('Please connect your wallet first');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/tx/claim', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ marketId })
-                });
-
-                const data = await response.json();
-
-                if (!data.success) {
-                    alert(data.error || 'Failed to build claim transaction');
-                    return;
-                }
-
-                console.log('Claim transaction ready:', data.transaction);
-                alert('Transaction built! Implement wallet signing to complete claim.');
-
-            } catch (error) {
-                console.error('Claim error:', error);
-                alert('Failed to claim: ' + error.message);
-            }
-        }
-    </script>
-
     <% } else { %>
         <!-- Empty State -->
         <div class="card-glass rounded-xl p-12 text-center">

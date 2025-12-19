@@ -21,6 +21,7 @@ import {
     getPendingResolutionMarkets,
     buildCreateMarketTx,
     buildResolveMarketTx,
+    buildResolveMarketEarlyTx,
     MarketState,
 } from '../services/contract.js';
 
@@ -40,6 +41,25 @@ interface ResolveMarketBody {
     outcome: boolean;
 }
 
+interface AdminQuery {
+    wallet?: string;
+}
+
+/**
+ * Get wallet address from request (header, query param, or cookie)
+ * This allows admin pages to work with normal link navigation
+ */
+function getWalletAddressFromRequest(request: FastifyRequest<{ Querystring: AdminQuery }>): string | undefined {
+    // Priority: header > query param > cookie
+    const fromHeader = request.headers['x-wallet-address'] as string | undefined;
+    if (fromHeader) return fromHeader;
+
+    const fromQuery = request.query.wallet as string | undefined;
+    if (fromQuery) return fromQuery;
+
+    return undefined;
+}
+
 // ============ Route Registration ============
 
 /**
@@ -51,10 +71,10 @@ export async function registerAdminRoutes(server: FastifyInstance): Promise<void
     /**
      * GET /admin - Admin dashboard
      */
-    server.get('/admin', async (request: FastifyRequest, reply: FastifyReply) => {
+    server.get<{ Querystring: AdminQuery }>('/admin', async (request: FastifyRequest<{ Querystring: AdminQuery }>, reply: FastifyReply) => {
         try {
-            // Check if wallet address is provided (for initial page load)
-            const walletAddress = request.headers['x-wallet-address'] as string | undefined;
+            // Check if wallet address is provided (header or query param)
+            const walletAddress = getWalletAddressFromRequest(request);
 
             // If no wallet or not admin, return login prompt page
             if (!walletAddress || walletAddress.toLowerCase() !== config.adminAddress.toLowerCase()) {
@@ -103,11 +123,11 @@ export async function registerAdminRoutes(server: FastifyInstance): Promise<void
     });
 
     /**
-     * GET /admin/create - Market creation form
+     * GET /admin/create-market - Market creation form
      */
-    server.get('/admin/create', async (request: FastifyRequest, reply: FastifyReply) => {
+    server.get<{ Querystring: AdminQuery }>('/admin/create-market', async (request: FastifyRequest<{ Querystring: AdminQuery }>, reply: FastifyReply) => {
         try {
-            const walletAddress = request.headers['x-wallet-address'] as string | undefined;
+            const walletAddress = getWalletAddressFromRequest(request);
 
             // Check admin access
             if (!walletAddress || walletAddress.toLowerCase() !== config.adminAddress.toLowerCase()) {
@@ -148,11 +168,11 @@ export async function registerAdminRoutes(server: FastifyInstance): Promise<void
     /**
      * GET /admin/resolve/:id - Market resolution page
      */
-    server.get<{ Params: MarketParams }>(
+    server.get<{ Params: MarketParams; Querystring: AdminQuery }>(
         '/admin/resolve/:id',
-        async (request: FastifyRequest<{ Params: MarketParams }>, reply: FastifyReply) => {
+        async (request: FastifyRequest<{ Params: MarketParams; Querystring: AdminQuery }>, reply: FastifyReply) => {
             try {
-                const walletAddress = request.headers['x-wallet-address'] as string | undefined;
+                const walletAddress = getWalletAddressFromRequest(request);
 
                 // Check admin access
                 if (!walletAddress || walletAddress.toLowerCase() !== config.adminAddress.toLowerCase()) {
@@ -305,6 +325,72 @@ export async function registerAdminRoutes(server: FastifyInstance): Promise<void
                 });
             } catch (error) {
                 request.log.error(error, 'Failed to build resolve market transaction');
+                return reply.status(500).send({
+                    success: false,
+                    error: 'Failed to build transaction',
+                    message: error instanceof Error ? error.message : 'Unknown error',
+                });
+            }
+        }
+    );
+
+    /**
+     * POST /api/admin/tx/resolve-market-early - Build unsigned early resolve market transaction
+     * Allows admin to close and resolve a market before close time
+     */
+    server.post<{ Body: ResolveMarketBody }>(
+        '/api/admin/tx/resolve-market-early',
+        { preHandler: requireAdmin },
+        async (request: FastifyRequest<{ Body: ResolveMarketBody }>, reply: FastifyReply) => {
+            try {
+                const validation = validateResolveMarketInput(request.body);
+
+                if ('error' in validation) {
+                    return reply.status(400).send({
+                        success: false,
+                        error: validation.error,
+                    });
+                }
+
+                const { marketId, outcome } = validation;
+
+                // Verify market exists and is in correct state
+                const market = await getMarketDisplay(marketId);
+
+                if (!market.isOpen) {
+                    if (market.isClosed) {
+                        return reply.status(400).send({
+                            success: false,
+                            error: 'Market is already closed. Use regular resolution instead.',
+                            marketState: 'Closed',
+                        });
+                    }
+                    return reply.status(400).send({
+                        success: false,
+                        error: 'Cannot resolve: Market has already been resolved',
+                        marketState: 'Resolved',
+                        outcome: market.outcomeLabel,
+                    });
+                }
+
+                // Build early resolution transaction
+                const tx = buildResolveMarketEarlyTx(marketId, outcome);
+
+                return reply.send({
+                    success: true,
+                    transaction: tx,
+                    meta: {
+                        marketId,
+                        question: market.question,
+                        outcome: outcome ? 'YES' : 'NO',
+                        yesPool: market.yesPoolFormatted,
+                        noPool: market.noPoolFormatted,
+                        action: 'resolveMarketEarly',
+                        warning: 'This will immediately close the market and prevent further betting.',
+                    },
+                });
+            } catch (error) {
+                request.log.error(error, 'Failed to build early resolve market transaction');
                 return reply.status(500).send({
                     success: false,
                     error: 'Failed to build transaction',

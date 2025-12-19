@@ -214,39 +214,14 @@
         let isNavigatingToAdmin = false;
 
         /**
-         * Navigate to admin dashboard with proper authentication header.
-         * Uses fetch with x-wallet-address header since the server validates against this.
+         * Navigate to admin dashboard with wallet query param.
          * @param {string} address - The wallet address to authenticate with
          */
-        async function navigateToAdminDashboard(address) {
+        function navigateToAdminDashboard(address) {
             if (isNavigatingToAdmin) return;
             isNavigatingToAdmin = true;
-
-            try {
-                const response = await fetch('/admin', {
-                    method: 'GET',
-                    headers: {
-                        'x-wallet-address': address,
-                        'Accept': 'text/html'
-                    }
-                });
-
-                if (response.ok) {
-                    const html = await response.text();
-                    // Replace entire document with admin dashboard
-                    document.open();
-                    document.write(html);
-                    document.close();
-                    // Update browser URL without adding to history
-                    history.replaceState(null, '', '/admin');
-                } else {
-                    console.error('Failed to load admin dashboard:', response.status);
-                    isNavigatingToAdmin = false;
-                }
-            } catch (error) {
-                console.error('Error navigating to admin:', error);
-                isNavigatingToAdmin = false;
-            }
+            // Simple redirect with query param
+            window.location.href = '/admin?wallet=' + encodeURIComponent(address);
         }
 
         // Listen for wallet connection and redirect if admin

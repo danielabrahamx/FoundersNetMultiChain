@@ -96,7 +96,8 @@
                 Your Position
             </h2>
 
-            <div id="user-position" hx-get="/markets/` + market.id + `/position" hx-trigger="load" hx-swap="innerHTML">
+            <div id="user-position" hx-get="/markets/` + market.id + `/position"
+                hx-trigger="refresh, walletReady from:body" hx-swap="innerHTML">
                 <div class="space-y-4">
                     <div class="h-16 skeleton rounded-lg"></div>
                     <div class="h-10 skeleton rounded-lg"></div>
@@ -167,24 +168,66 @@
         const isMarketOpen = ` + market.isOpen + `;
         const isMarketResolved = ` + market.isResolved + `;
 
-        // Refresh position and form when wallet connects/disconnects
-        const marketOnWalletConnected = window.onWalletConnected;
-        window.onWalletConnected = async function (address) {
-            await marketOnWalletConnected(address);
-            htmx.trigger('#user-position', 'load');
-            htmx.trigger('#betting-form', 'load');
-        };
+        // Function to load position data with wallet address
+        async function loadUserPosition() {
+            const walletAddr = window.walletAddress || (window.wallet && window.wallet.address);
+            console.log('[Market] Loading user position, wallet:', walletAddr);
 
-        const marketDisconnectWallet = window.disconnectWallet;
-        window.disconnectWallet = function () {
-            marketDisconnectWallet();
-            htmx.trigger('#user-position', 'load');
+            if (walletAddr) {
+                // Manually fetch instead of relying on HTMX configRequest timing
+                try {
+                    const response = await fetch('/markets/' + marketId + '/position?address=' + encodeURIComponent(walletAddr));
+                    const html = await response.text();
+                    document.getElementById('user-position').innerHTML = html;
+                } catch (error) {
+                    console.error('[Market] Error loading position:', error);
+                }
+            } else {
+                // Trigger HTMX to show the connect wallet prompt
+                htmx.trigger('#user-position', 'refresh');
+            }
+        }
+
+        // Listen for wallet events
+        document.addEventListener('wallet:connected', function (e) {
+            console.log('[Market] Wallet connected event:', e.detail);
+            loadUserPosition();
+            // Also refresh betting form
             htmx.trigger('#betting-form', 'load');
-        };
+        });
+
+        document.addEventListener('wallet:disconnected', function () {
+            console.log('[Market] Wallet disconnected event');
+            loadUserPosition();
+            htmx.trigger('#betting-form', 'load');
+        });
+
+        // Initialize: wait for wallet.js and then load position
+        function initMarketPage() {
+            if (typeof window.wallet === 'undefined') {
+                console.log('[Market] Waiting for wallet.js...');
+                setTimeout(initMarketPage, 100);
+                return;
+            }
+
+            console.log('[Market] Wallet.js ready, checking connection...');
+
+            // Give wallet.js time to restore session
+            setTimeout(function () {
+                loadUserPosition();
+            }, 200);
+        }
+
+        // Start initialization
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMarketPage);
+        } else {
+            initMarketPage();
+        }
 
         // Admin resolution function
         async function resolveMarket(marketId, outcome) {
-            if (!window.walletAddress || !window.isAdmin) {
+            if (!window.wallet || !window.wallet.isConnected() || !window.isAdmin) {
                 alert('Admin access required');
                 return;
             }
@@ -208,8 +251,18 @@
                     return;
                 }
 
-                console.log('Resolution transaction ready:', data.transaction);
-                alert('Transaction built! Sign in your wallet to complete resolution.');
+                // Sign and send transaction
+                const txHash = await window.wallet.signTransaction(data.transaction);
+                console.log('Resolution transaction sent:', txHash);
+
+                const receipt = await window.wallet.waitForReceipt(txHash);
+
+                if (receipt.status === '0x1' || receipt.status === 1) {
+                    alert('Market resolved successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Transaction failed on-chain');
+                }
 
             } catch (error) {
                 console.error('Resolution error:', error);

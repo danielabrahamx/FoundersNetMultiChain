@@ -133,8 +133,32 @@ export async function registerHtmxRoutes(server: FastifyInstance): Promise<void>
 
                 const positions = await getAllUserPositions(address);
 
+                // Transform positions to the format expected by the template
+                const bets = positions.map(p => ({
+                    ...p.position,
+                    market: p.market,
+                    yesBets: parseFloat(p.position.yesBetsFormatted),
+                    noBets: parseFloat(p.position.noBetsFormatted),
+                }));
+
+                // Calculate stats
+                let totalWagered = 0;
+                let pendingCount = 0;
+                let claimableTotal = 0;
+
+                for (const bet of bets) {
+                    totalWagered += parseFloat(bet.totalBets);
+                    if (!bet.market.isResolved) {
+                        pendingCount++;
+                    }
+                    claimableTotal += parseFloat(bet.claimableAmount);
+                }
+
                 return reply.view('partials/user-bets-list.ejs', {
-                    positions,
+                    bets,
+                    totalWagered: totalWagered.toFixed(2),
+                    pendingCount,
+                    claimableAmount: claimableTotal.toFixed(2),
                     walletAddress: address,
                     network: config.network,
                     chainId: config.networkConfig.chainId,

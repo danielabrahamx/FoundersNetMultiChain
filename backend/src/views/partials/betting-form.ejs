@@ -32,253 +32,449 @@
                 <% } %>
     </div>
     <% } else { %>
-        <!-- Betting Form -->
-        <form id="bet-form" class="space-y-5" aria-label="Place a bet on this market">
-            <!-- Outcome Selection -->
-            <fieldset>
-                <legend class="block text-sm text-gray-400 mb-3">Choose Your Prediction</legend>
-                <div class="grid grid-cols-2 gap-4" role="radiogroup" aria-label="Select outcome">
-                    <!-- YES Button -->
-                    <button type="button" id="btn-yes" onclick="selectOutcome(true)"
-                        class="relative py-4 rounded-xl border-2 border-yes/40 bg-yes/10 hover:bg-yes/20 text-yes font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yes/50"
-                        role="radio" aria-checked="false" aria-label="Bet on YES">
-                        <span class="text-2xl block mb-1">YES</span>
-                        <span class="text-xs text-yes/70">
-                            <%= market.yesPercentage.toFixed(1) %>% implied
-                        </span>
-                    </button>
+        <!-- Check if wallet connected -->
+        <div id="betting-area">
+            <!-- Betting Form -->
+            <form id="bet-form" class="space-y-5" aria-label="Place a bet on this market">
+                <!-- Outcome Selection -->
+                <fieldset>
+                    <legend class="block text-sm text-gray-400 mb-3">Choose Your Prediction</legend>
+                    <div class="grid grid-cols-2 gap-4" role="radiogroup" aria-label="Select outcome">
+                        <!-- YES Button -->
+                        <button type="button" id="btn-yes" data-outcome="true"
+                            class="relative py-4 rounded-xl border-2 border-yes/40 bg-yes/10 hover:bg-yes/20 text-yes font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yes/50"
+                            role="radio" aria-checked="false" aria-label="Bet on YES">
+                            <span class="text-2xl block mb-1">YES</span>
+                            <span class="text-xs text-yes/70">
+                                <%= market.yesPercentage.toFixed(1) %>% implied
+                            </span>
+                        </button>
 
-                    <!-- NO Button -->
-                    <button type="button" id="btn-no" onclick="selectOutcome(false)"
-                        class="relative py-4 rounded-xl border-2 border-no/40 bg-no/10 hover:bg-no/20 text-no font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-no/50"
-                        role="radio" aria-checked="false" aria-label="Bet on NO">
-                        <span class="text-2xl block mb-1">NO</span>
-                        <span class="text-xs text-no/70">
-                            <%= market.noPercentage.toFixed(1) %>% implied
-                        </span>
+                        <!-- NO Button -->
+                        <button type="button" id="btn-no" data-outcome="false"
+                            class="relative py-4 rounded-xl border-2 border-no/40 bg-no/10 hover:bg-no/20 text-no font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-no/50"
+                            role="radio" aria-checked="false" aria-label="Bet on NO">
+                            <span class="text-2xl block mb-1">NO</span>
+                            <span class="text-xs text-no/70">
+                                <%= market.noPercentage.toFixed(1) %>% implied
+                            </span>
+                        </button>
+                    </div>
+                </fieldset>
+
+                <!-- Amount Input -->
+                <div>
+                    <label for="bet-amount" class="block text-sm text-gray-400 mb-2">Bet Amount (USDC)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
+                        <input type="number" id="bet-amount" name="amount" min="1" step="0.01" placeholder="10.00"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-16 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-lg"
+                            aria-describedby="amount-help" />
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">USDC</span>
+                    </div>
+                    <p id="amount-help" class="text-xs text-gray-500 mt-2">
+                        Minimum bet: 1 USDC
+                    </p>
+                    <p id="amount-error" class="text-xs text-red-400 mt-1 hidden"></p>
+                </div>
+
+                <!-- Potential Winnings Display -->
+                <div id="potential-winnings"
+                    class="hidden p-4 bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/30 rounded-xl">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300 text-sm">Potential Winnings</span>
+                        <span class="text-white font-bold text-lg" id="potential-amount">--</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">If your prediction is correct</p>
+                </div>
+
+                <!-- Quick Amount Buttons -->
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" data-amount="5"
+                        class="quick-amount-btn px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                        $5
+                    </button>
+                    <button type="button" data-amount="10"
+                        class="quick-amount-btn px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                        $10
+                    </button>
+                    <button type="button" data-amount="25"
+                        class="quick-amount-btn px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                        $25
+                    </button>
+                    <button type="button" data-amount="50"
+                        class="quick-amount-btn px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                        $50
+                    </button>
+                    <button type="button" data-amount="100"
+                        class="quick-amount-btn px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                        $100
                     </button>
                 </div>
-            </fieldset>
 
-            <!-- Amount Input -->
-            <div>
-                <label for="bet-amount" class="block text-sm text-gray-400 mb-2">Bet Amount (USDC)</label>
-                <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
-                    <input type="number" id="bet-amount" name="amount" min="1" step="0.01" placeholder="10.00"
-                        onkeyup="validateAmount()" oninput="validateAmount()"
-                        class="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-16 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-lg"
-                        aria-describedby="amount-help" />
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">USDC</span>
-                </div>
-                <p id="amount-help" class="text-xs text-gray-500 mt-2">
-                    Minimum bet: 1 USDC
-                </p>
-                <p id="amount-error" class="text-xs text-red-400 mt-1 hidden"></p>
-            </div>
+                <!-- Place Bet Button -->
+                <button type="button" id="place-bet-btn"
+                    class="w-full py-4 btn-primary text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    disabled aria-disabled="true">
+                    <span id="bet-btn-text">Select an outcome</span>
+                    <svg id="bet-btn-spinner" class="w-5 h-5 spinner hidden" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
 
-            <!-- Quick Amount Buttons -->
-            <div class="flex flex-wrap gap-2">
-                <button type="button" onclick="setAmount(5)"
-                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                    $5
-                </button>
-                <button type="button" onclick="setAmount(10)"
-                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                    $10
-                </button>
-                <button type="button" onclick="setAmount(25)"
-                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                    $25
-                </button>
-                <button type="button" onclick="setAmount(50)"
-                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                    $50
-                </button>
-                <button type="button" onclick="setAmount(100)"
-                    class="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                    $100
-                </button>
-            </div>
-
-            <!-- Place Bet Button -->
-            <button type="button" id="place-bet-btn" onclick="placeBet()"
-                class="w-full py-4 btn-primary text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                disabled aria-disabled="true">
-                <span id="bet-btn-text">Select an outcome</span>
-                <svg id="bet-btn-spinner" class="w-5 h-5 spinner hidden" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-            </button>
-
-            <!-- Status Message -->
-            <div id="bet-status" class="hidden" role="alert" aria-live="polite"></div>
-        </form>
+                <!-- Status Message -->
+                <div id="bet-status" class="hidden" role="alert" aria-live="polite"></div>
+            </form>
+        </div>
 
         <script>
-            let selectedOutcome = null;
-            const marketId = <%= market.id %>;
+            (function () {
+                // IIFE to avoid variable redeclaration when HTMX reloads content
+                let selectedOutcome = null;
+                const marketId = <%= market.id %>;
+                const marketData = {
+                    yesPool: parseFloat('<%= market.yesPoolFormatted %>'),
+                    noPool: parseFloat('<%= market.noPoolFormatted %>'),
+                    totalPool: parseFloat('<%= market.totalPool %>')
+                };
+                let userHasPosition = false;
 
-            function selectOutcome(outcome) {
-                selectedOutcome = outcome;
-
-                const yesBtn = document.getElementById('btn-yes');
-                const noBtn = document.getElementById('btn-no');
-                const placeBtn = document.getElementById('place-bet-btn');
-                const btnText = document.getElementById('bet-btn-text');
-
-                // Reset both buttons
-                yesBtn.classList.remove('ring-2', 'ring-yes', 'bg-yes/30', 'scale-105');
-                noBtn.classList.remove('ring-2', 'ring-no', 'bg-no/30', 'scale-105');
-                yesBtn.setAttribute('aria-checked', 'false');
-                noBtn.setAttribute('aria-checked', 'false');
-
-                if (outcome === true) {
-                    yesBtn.classList.add('ring-2', 'ring-yes', 'bg-yes/30', 'scale-105');
-                    yesBtn.setAttribute('aria-checked', 'true');
-                    placeBtn.classList.remove('btn-primary', 'btn-no');
-                    placeBtn.classList.add('btn-yes');
-                    btnText.textContent = 'Place YES Bet';
-                } else {
-                    noBtn.classList.add('ring-2', 'ring-no', 'bg-no/30', 'scale-105');
-                    noBtn.setAttribute('aria-checked', 'true');
-                    placeBtn.classList.remove('btn-primary', 'btn-yes');
-                    placeBtn.classList.add('btn-no');
-                    btnText.textContent = 'Place NO Bet';
-                }
-
-                validateForm();
-            }
-
-            function setAmount(value) {
-                document.getElementById('bet-amount').value = value;
-                validateAmount();
-            }
-
-            function validateAmount() {
-                const amount = parseFloat(document.getElementById('bet-amount').value);
-                const errorEl = document.getElementById('amount-error');
-
-                if (isNaN(amount) || amount < 1) {
-                    if (document.getElementById('bet-amount').value !== '') {
-                        errorEl.textContent = 'Minimum bet is 1 USDC';
-                        errorEl.classList.remove('hidden');
+                // Check if user already has a position in this market
+                async function checkExistingPosition() {
+                    if (!window.wallet || !window.wallet.isConnected()) {
+                        return false;
                     }
-                } else {
-                    errorEl.classList.add('hidden');
+
+                    try {
+                        const address = window.wallet.address;
+                        const response = await fetch(`/api/position/${marketId}/${address}`);
+                        const data = await response.json();
+
+                        if (data.success && data.data.hasBets) {
+                            userHasPosition = true;
+                            showAlreadyBetMessage(data.data);
+                            return true;
+                        }
+                        return false;
+                    } catch (error) {
+                        console.error('Error checking position:', error);
+                        return false;
+                    }
                 }
 
-                validateForm();
-            }
+                // Show message that user already bet on this market
+                function showAlreadyBetMessage(position) {
+                    const betArea = document.getElementById('betting-area');
+                    if (!betArea) return;
 
-            function validateForm() {
-                const amount = parseFloat(document.getElementById('bet-amount').value);
-                const placeBtn = document.getElementById('place-bet-btn');
-                const isValid = selectedOutcome !== null && !isNaN(amount) && amount >= 1;
+                    const yesBet = parseFloat(position.yesBetsFormatted) || 0;
+                    const noBet = parseFloat(position.noBetsFormatted) || 0;
+                    const totalBet = yesBet + noBet;
+                    const betSide = yesBet > 0 ? 'YES' : 'NO';
+                    const betColorClass = yesBet > 0 ? 'yes' : 'no';
 
-                placeBtn.disabled = !isValid;
-                placeBtn.setAttribute('aria-disabled', !isValid);
-            }
-
-            async function placeBet() {
-                if (selectedOutcome === null) {
-                    showStatus('Please select YES or NO', 'error');
-                    return;
+                    betArea.innerHTML = `
+                        <div class="text-center py-8">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-${betColorClass}/20 mb-4">
+                                <svg class="w-8 h-8 text-${betColorClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-${betColorClass} mb-2">You've Already Placed a Bet</h3>
+                            <p class="text-gray-400 mb-4">
+                                You bet <span class="text-white font-bold">$${totalBet} USDC</span> on <span class="font-bold text-${betColorClass}">${betSide}</span>
+                            </p>
+                            <p class="text-gray-500 text-sm">
+                                Only one bet per user is allowed per market.<br>
+                                Check "Your Position" to see potential winnings.
+                            </p>
+                        </div>
+                    `;
                 }
 
-                const amount = document.getElementById('bet-amount').value;
-                if (!amount || parseFloat(amount) < 1) {
-                    showStatus('Minimum bet is 1 USDC', 'error');
-                    return;
+                function selectOutcome(outcome) {
+                    if (userHasPosition) return; // Block if already bet
+
+                    selectedOutcome = outcome;
+
+                    const yesBtn = document.getElementById('btn-yes');
+                    const noBtn = document.getElementById('btn-no');
+                    const placeBtn = document.getElementById('place-bet-btn');
+                    const btnText = document.getElementById('bet-btn-text');
+
+                    // Reset both buttons
+                    yesBtn.classList.remove('ring-2', 'ring-yes', 'bg-yes/30', 'scale-105');
+                    noBtn.classList.remove('ring-2', 'ring-no', 'bg-no/30', 'scale-105');
+                    yesBtn.setAttribute('aria-checked', 'false');
+                    noBtn.setAttribute('aria-checked', 'false');
+
+                    if (outcome === true) {
+                        yesBtn.classList.add('ring-2', 'ring-yes', 'bg-yes/30', 'scale-105');
+                        yesBtn.setAttribute('aria-checked', 'true');
+                        placeBtn.classList.remove('btn-primary', 'btn-no');
+                        placeBtn.classList.add('btn-yes');
+                        btnText.textContent = 'Place YES Bet';
+                    } else {
+                        noBtn.classList.add('ring-2', 'ring-no', 'bg-no/30', 'scale-105');
+                        noBtn.setAttribute('aria-checked', 'true');
+                        placeBtn.classList.remove('btn-primary', 'btn-yes');
+                        placeBtn.classList.add('btn-no');
+                        btnText.textContent = 'Place NO Bet';
+                    }
+
+                    validateForm();
+                    updatePotentialWinnings(); // Update potential winnings when outcome changes
                 }
 
-                if (!window.walletAddress) {
-                    showStatus('Please connect your wallet first', 'error');
-                    return;
+                function setAmount(value) {
+                    document.getElementById('bet-amount').value = value;
+                    validateAmount();
                 }
 
-                const placeBtn = document.getElementById('place-bet-btn');
-                const btnText = document.getElementById('bet-btn-text');
-                const spinner = document.getElementById('bet-btn-spinner');
+                function validateAmount() {
+                    const amount = parseFloat(document.getElementById('bet-amount').value);
+                    const errorEl = document.getElementById('amount-error');
 
-                try {
-                    placeBtn.disabled = true;
-                    spinner.classList.remove('hidden');
-                    btnText.textContent = 'Building transaction...';
-                    showStatus('Preparing transaction...', 'info');
+                    if (isNaN(amount) || amount < 1) {
+                        if (document.getElementById('bet-amount').value !== '') {
+                            errorEl.textContent = 'Minimum bet is 1 USDC';
+                            errorEl.classList.remove('hidden');
+                        }
+                    } else {
+                        errorEl.classList.add('hidden');
+                    }
 
-                    // Get unsigned transaction from API
-                    const response = await fetch('/api/tx/bet', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            marketId: marketId,
-                            outcome: selectedOutcome,
-                            amount: amount
-                        })
-                    });
+                    validateForm();
+                    updatePotentialWinnings(); // Update when amount changes
+                }
 
-                    const data = await response.json();
+                function validateForm() {
+                    const amount = parseFloat(document.getElementById('bet-amount').value);
+                    const placeBtn = document.getElementById('place-bet-btn');
+                    const isValid = selectedOutcome !== null && !isNaN(amount) && amount >= 1;
 
-                    if (!data.success) {
-                        showStatus(data.error || 'Failed to build transaction', 'error');
-                        resetButton();
+                    placeBtn.disabled = !isValid;
+                    placeBtn.setAttribute('aria-disabled', !isValid);
+                }
+
+                // Calculate and display potential winnings (parimutuel formula)
+                function updatePotentialWinnings() {
+                    const potentialEl = document.getElementById('potential-winnings');
+                    const potentialAmountEl = document.getElementById('potential-amount');
+
+                    if (!potentialEl || !potentialAmountEl) return;
+
+                    const betAmount = parseFloat(document.getElementById('bet-amount').value);
+
+                    // Hide if no valid bet amount or outcome selected
+                    if (isNaN(betAmount) || betAmount < 1 || selectedOutcome === null) {
+                        potentialEl.classList.add('hidden');
                         return;
                     }
 
-                    btnText.textContent = 'Approve in wallet...';
-                    showStatus('Please approve the transaction in your wallet', 'info');
+                    // Calculate potential winnings using parimutuel formula
+                    // If you win: (yourBet / winningPool) * totalPool
+                    const yourPool = selectedOutcome ? marketData.yesPool : marketData.noPool;
+                    const newYourPool = yourPool + betAmount;
+                    const newTotalPool = marketData.totalPool + betAmount;
 
-                    // Transaction ready - wallet integration will handle signing
-                    console.log('Transaction ready:', data.transaction);
+                    // Your share of the winning pool after your bet
+                    const yourShare = betAmount / newYourPool;
 
-                    // Here you would use viem to send the transaction
-                    // For now, show success message
-                    showStatus('Transaction built! Implement wallet signing to complete.', 'success');
-                    resetButton();
+                    // Your winnings if you win = your share of total pool
+                    const potentialPayout = yourShare * newTotalPool;
+                    const potentialProfit = potentialPayout - betAmount;
 
-                } catch (error) {
-                    console.error('Bet error:', error);
-                    showStatus('Failed to place bet: ' + error.message, 'error');
-                    resetButton();
-                }
-            }
+                    potentialEl.classList.remove('hidden');
+                    potentialAmountEl.textContent = `$${potentialProfit.toFixed(2)} USDC`;
 
-            function resetButton() {
-                const placeBtn = document.getElementById('place-bet-btn');
-                const btnText = document.getElementById('bet-btn-text');
-                const spinner = document.getElementById('bet-btn-spinner');
-
-                spinner.classList.add('hidden');
-                btnText.textContent = selectedOutcome === true ? 'Place YES Bet' :
-                    selectedOutcome === false ? 'Place NO Bet' : 'Select an outcome';
-                placeBtn.disabled = false;
-            }
-
-            function showStatus(message, type) {
-                const status = document.getElementById('bet-status');
-                status.classList.remove('hidden', 'text-red-400', 'text-green-400', 'text-gray-400', 'bg-red-500/10', 'bg-green-500/10', 'bg-white/5');
-
-                let bgClass = 'bg-white/5';
-                let textClass = 'text-gray-400';
-                let icon = '';
-
-                if (type === 'error') {
-                    bgClass = 'bg-red-500/10';
-                    textClass = 'text-red-400';
-                    icon = '<svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
-                } else if (type === 'success') {
-                    bgClass = 'bg-green-500/10';
-                    textClass = 'text-green-400';
-                    icon = '<svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
-                } else {
-                    icon = '<svg class="w-4 h-4 flex-shrink-0 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>';
+                    // Add color based on potential return
+                    const roi = (potentialProfit / betAmount) * 100;
+                    if (roi > 100) {
+                        potentialAmountEl.className = 'text-green-400 font-bold text-lg';
+                    } else if (roi > 50) {
+                        potentialAmountEl.className = 'text-yes font-bold text-lg';
+                    } else {
+                        potentialAmountEl.className = 'text-white font-bold text-lg';
+                    }
                 }
 
-                status.className = `flex items-center gap-2 p-3 rounded-lg text-sm ${bgClass} ${textClass}`;
-                status.innerHTML = icon + '<span>' + message + '</span>';
-            }
+                async function placeBet() {
+                    if (selectedOutcome === null) {
+                        showStatus('Please select YES or NO', 'error');
+                        return;
+                    }
+
+                    const amount = document.getElementById('bet-amount').value;
+                    if (!amount || parseFloat(amount) < 1) {
+                        showStatus('Minimum bet is 1 USDC', 'error');
+                        return;
+                    }
+
+                    // Check wallet connection
+                    if (!window.wallet || !window.wallet.isConnected()) {
+                        showStatus('Please connect your wallet first', 'error');
+                        return;
+                    }
+
+                    // Check correct network
+                    if (!window.wallet.isCorrectNetwork()) {
+                        showStatus('Please switch to the correct network', 'error');
+                        try {
+                            await window.wallet.switchNetwork();
+                        } catch (e) {
+                            showStatus('Failed to switch network: ' + e.message, 'error');
+                            return;
+                        }
+                    }
+
+                    const placeBtn = document.getElementById('place-bet-btn');
+                    const btnText = document.getElementById('bet-btn-text');
+                    const spinner = document.getElementById('bet-btn-spinner');
+
+                    try {
+                        placeBtn.disabled = true;
+                        spinner.classList.remove('hidden');
+
+                        // Convert amount to USDC units (6 decimals)
+                        const amountInUnits = BigInt(Math.floor(parseFloat(amount) * 1000000));
+
+                        // Step 1: Check USDC allowance
+                        btnText.textContent = 'Checking allowance...';
+                        showStatus('Checking USDC allowance...', 'info');
+
+                        const needsApproval = await window.wallet.needsApproval(amountInUnits);
+
+                        if (needsApproval) {
+                            // Step 2: Request approval
+                            btnText.textContent = 'Approve USDC...';
+                            showStatus('Please approve USDC spending in your wallet', 'info');
+
+                            // Request unlimited approval for convenience
+                            await window.wallet.requestApproval(amountInUnits, true);
+                            showStatus('USDC approved! Now placing bet...', 'info');
+                        }
+
+                        // Step 3: Get unsigned transaction from API
+                        btnText.textContent = 'Building transaction...';
+                        showStatus('Preparing bet transaction...', 'info');
+
+                        const response = await fetch('/api/tx/bet', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                marketId: marketId,
+                                outcome: selectedOutcome,
+                                amount: amount
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (!data.success) {
+                            showStatus(data.error || 'Failed to build transaction', 'error');
+                            resetButton();
+                            return;
+                        }
+
+                        // Step 4: Send transaction via wallet
+                        btnText.textContent = 'Confirm in wallet...';
+                        showStatus('Please confirm the transaction in your wallet', 'info');
+
+                        console.log('Sending transaction:', data.transaction);
+                        const txHash = await window.wallet.signTransaction(data.transaction);
+
+                        // Step 5: Wait for confirmation
+                        btnText.textContent = 'Confirming...';
+                        showStatus('Transaction submitted! Waiting for confirmation...', 'info');
+
+                        const receipt = await window.wallet.waitForReceipt(txHash);
+
+                        if (receipt.status === '0x1' || receipt.status === 1) {
+                            showStatus('Bet placed successfully! 🎉', 'success');
+                            // Refresh the page or update UI
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                        } else {
+                            showStatus('Transaction failed on-chain', 'error');
+                            resetButton();
+                        }
+
+                    } catch (error) {
+                        console.error('Bet error:', error);
+                        const errorMsg = error.message || 'Failed to place bet';
+                        showStatus(errorMsg, 'error');
+                        resetButton();
+                    }
+                }
+
+                function resetButton() {
+                    const placeBtn = document.getElementById('place-bet-btn');
+                    const btnText = document.getElementById('bet-btn-text');
+                    const spinner = document.getElementById('bet-btn-spinner');
+
+                    spinner.classList.add('hidden');
+                    btnText.textContent = selectedOutcome === true ? 'Place YES Bet' :
+                        selectedOutcome === false ? 'Place NO Bet' : 'Select an outcome';
+                    placeBtn.disabled = false;
+                }
+
+                function showStatus(message, type) {
+                    const status = document.getElementById('bet-status');
+                    status.classList.remove('hidden', 'text-red-400', 'text-green-400', 'text-gray-400', 'bg-red-500/10', 'bg-green-500/10', 'bg-white/5');
+
+                    let bgClass = 'bg-white/5';
+                    let textClass = 'text-gray-400';
+                    let icon = '';
+
+                    if (type === 'error') {
+                        bgClass = 'bg-red-500/10';
+                        textClass = 'text-red-400';
+                        icon = '<svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
+                    } else if (type === 'success') {
+                        bgClass = 'bg-green-500/10';
+                        textClass = 'text-green-400';
+                        icon = '<svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
+                    } else {
+                        icon = '<svg class="w-4 h-4 flex-shrink-0 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>';
+                    }
+
+                    status.className = `flex items-center gap-2 p-3 rounded-lg text-sm ${bgClass} ${textClass}`;
+                    status.innerHTML = icon + '<span>' + message + '</span>';
+                }
+
+                // Attach event listeners after script loads
+                // This fixes the "not defined" errors with HTMX dynamic loading
+
+                // YES/NO outcome buttons
+                document.getElementById('btn-yes').addEventListener('click', function () {
+                    selectOutcome(true);
+                });
+                document.getElementById('btn-no').addEventListener('click', function () {
+                    selectOutcome(false);
+                });
+
+                // Bet amount input
+                const betAmountInput = document.getElementById('bet-amount');
+                betAmountInput.addEventListener('keyup', validateAmount);
+                betAmountInput.addEventListener('input', validateAmount);
+
+                // Quick amount buttons
+                document.querySelectorAll('.quick-amount-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        setAmount(parseInt(this.dataset.amount, 10));
+                    });
+                });
+
+                // Place bet button
+                document.getElementById('place-bet-btn').addEventListener('click', placeBet);
+
+                // Check if user already has a position when form loads
+                checkExistingPosition();
+            })();
         </script>
         <% } %>

@@ -6,7 +6,8 @@
                 <span class="font-semibold text-yellow-400">Admin Mode Active</span>
                 <span class="text-yellow-200/70 text-sm ml-2">Creating New Market</span>
             </div>
-            <a href="/admin" class="text-yellow-400 hover:text-yellow-300 text-sm">← Back to Dashboard</a>
+            <a id="back-to-dashboard" href="/admin" class="text-yellow-400 hover:text-yellow-300 text-sm">← Back to
+                Dashboard</a>
         </div>
 
         <div class="max-w-2xl mx-auto">
@@ -294,6 +295,14 @@
                     document.getElementById('submit-text').classList.remove('hidden');
                     document.getElementById('submit-loading').classList.add('hidden');
                     submitBtn.disabled = false;
+                }
+            });
+
+            // Update back-to-dashboard link with wallet param
+            document.addEventListener('DOMContentLoaded', function () {
+                const backLink = document.getElementById('back-to-dashboard');
+                if (backLink && window.appConfig && window.appConfig.adminAddress) {
+                    backLink.href = '/admin?wallet=' + encodeURIComponent(window.appConfig.adminAddress);
                 }
             });
         </script>

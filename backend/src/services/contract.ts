@@ -171,6 +171,16 @@ const FOUNDERS_NET_MARKET_ABI = [
         ],
         outputs: [],
     },
+    {
+        name: 'resolveMarketEarly',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [
+            { name: '_marketId', type: 'uint256' },
+            { name: '_outcome', type: 'bool' },
+        ],
+        outputs: [],
+    },
 ] as const;
 
 const ERC20_ABI = [
@@ -663,6 +673,27 @@ export function buildResolveMarketTx(
     };
 }
 
+/**
+ * Build unsigned transaction for resolving a market early (admin only)
+ * This allows resolving an Open market before its close time
+ */
+export function buildResolveMarketEarlyTx(
+    marketId: number,
+    outcome: boolean
+): TransactionRequest {
+    const data = encodeFunctionData({
+        abi: FOUNDERS_NET_MARKET_ABI,
+        functionName: 'resolveMarketEarly',
+        args: [BigInt(marketId), outcome],
+    });
+
+    return {
+        to: getContractAddress(),
+        data,
+        chainId: config.networkConfig.chainId,
+    };
+}
+
 // ============ Admin Statistics Functions ============
 
 export interface AdminStats {
@@ -680,7 +711,7 @@ export interface AdminStats {
  */
 export async function getAdminStats(): Promise<AdminStats> {
     const markets = await getAllMarkets();
-    
+
     let totalVolume = 0n;
     let activeBets = 0n;
     let openCount = 0;

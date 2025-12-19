@@ -26,39 +26,99 @@
     </div>
 
     <!-- HTMX: Load user bets when wallet is connected -->
-    <div id="user-bets-container" hx-get="/my-bets/list" hx-trigger="load delay:100ms" hx-swap="innerHTML"
-        class="hidden">
+    <div id="user-bets-container" class="hidden">
+        <div class="text-center py-12">
+            <svg class="w-8 h-8 animate-spin text-primary mx-auto" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <p class="text-gray-400 mt-4">Loading your bets...</p>
+        </div>
     </div>
 
     <script>
-        // Check wallet and load bets
-        function loadUserBets() {
-            if (window.walletAddress) {
-                document.getElementById('my-bets-content').classList.add('hidden');
-                const container = document.getElementById('user-bets-container');
-                container.classList.remove('hidden');
-                htmx.trigger(container, 'load');
-            } else {
+        // Track if we've already loaded bets
+        let betsLoaded = false;
+
+        // Load user bets via direct fetch then HTMX swap
+        async function loadUserBets() {
+            // Get wallet address from multiple sources
+            const walletAddr = window.walletAddress || (window.wallet && window.wallet.address);
+
+            console.log('[My Bets] loadUserBets called, address:', walletAddr);
+
+            if (!walletAddr) {
+                console.log('[My Bets] No wallet connected, showing connect prompt');
                 document.getElementById('my-bets-content').classList.remove('hidden');
                 document.getElementById('user-bets-container').classList.add('hidden');
+                betsLoaded = false;
+                return;
+            }
+
+            // Prevent re-loading if already loaded for same address
+            if (betsLoaded) {
+                console.log('[My Bets] Already loaded bets');
+                return;
+            }
+
+            console.log('[My Bets] Loading bets for:', walletAddr);
+            document.getElementById('my-bets-content').classList.add('hidden');
+            document.getElementById('user-bets-container').classList.remove('hidden');
+
+            try {
+                // Directly fetch the HTMX partial with the address
+                const response = await fetch('/my-bets/list?address=' + encodeURIComponent(walletAddr));
+                const html = await response.text();
+
+                // Insert the HTML
+                document.getElementById('user-bets-container').innerHTML = html;
+                betsLoaded = true;
+                console.log('[My Bets] Successfully loaded bets');
+            } catch (error) {
+                console.error('[My Bets] Error loading bets:', error);
+                document.getElementById('user-bets-container').innerHTML =
+                    '<div class="text-center py-12 text-red-400">Failed to load bets. <button onclick="betsLoaded=false;loadUserBets()" class="underline">Try again</button></div>';
             }
         }
 
-        // On page load
-        document.addEventListener('DOMContentLoaded', loadUserBets);
-
-        // On wallet connect
-        const myBetsOnWalletConnected = window.onWalletConnected;
-        window.onWalletConnected = async function (address) {
-            await myBetsOnWalletConnected(address);
+        // Listen for wallet connection events
+        document.addEventListener('wallet:connected', function (e) {
+            console.log('[My Bets] wallet:connected event received', e.detail);
+            betsLoaded = false; // Reset so we reload
             loadUserBets();
-        };
+        });
 
-        // On wallet disconnect
-        const myBetsDisconnectWallet = window.disconnectWallet;
-        window.disconnectWallet = function () {
-            myBetsDisconnectWallet();
+        document.addEventListener('wallet:disconnected', function () {
+            console.log('[My Bets] wallet:disconnected event received');
+            betsLoaded = false;
             loadUserBets();
-        };
+        });
+
+        // Wait for wallet.js to initialize, then check if connected
+        function waitForWalletInit() {
+            // Check if wallet.js is loaded and has restored session
+            if (typeof window.wallet !== 'undefined' && window.wallet) {
+                console.log('[My Bets] Wallet module loaded, checking address');
+                if (window.walletAddress || (window.wallet.address)) {
+                    console.log('[My Bets] Wallet already connected');
+                    loadUserBets();
+                } else {
+                    console.log('[My Bets] Wallet not connected yet, will wait for event');
+                }
+            } else {
+                console.log('[My Bets] Waiting for wallet.js to load...');
+                setTimeout(waitForWalletInit, 100);
+            }
+        }
+
+        // Start initialization
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(waitForWalletInit, 100);
+            });
+        } else {
+            setTimeout(waitForWalletInit, 100);
+        }
     </script>
     ` }) %>

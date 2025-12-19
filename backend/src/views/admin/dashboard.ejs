@@ -1,246 +1,606 @@
 <%# Admin Dashboard - Main admin panel with stats and market list %>
-    <%- include('../layouts/main', { body: ` <!-- Admin Mode Indicator -->
-        <div class="mb-6 flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
-            <div class="w-3 h-3 rounded-full bg-yellow-400 animate-pulse"></div>
-            <div class="flex-1">
-                <span class="font-semibold text-yellow-400">Admin Mode Active</span>
-                <span class="text-yellow-200/70 text-sm ml-2">Managing FoundersNet Markets</span>
-            </div>
-            <a href="/" class="text-yellow-400 hover:text-yellow-300 text-sm">Exit Admin →</a>
-        </div>
+    <!DOCTYPE html>
+    <html lang="en">
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <!-- Total Markets -->
-            <div class="card-glass rounded-xl p-5">
-                <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Total Markets</div>
-                <div class="text-3xl font-bold text-white">
-                    <%= stats.totalMarkets %>
-                </div>
-            </div>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>
+            <%= typeof title !=='undefined' ? title : 'Admin Dashboard - FoundersNet' %>
+        </title>
+        <meta name="description" content="FoundersNet Admin Dashboard - Manage prediction markets">
 
-            <!-- Active Bets -->
-            <div class="card-glass rounded-xl p-5">
-                <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Open Markets</div>
-                <div class="text-3xl font-bold text-yes">
-                    <%= stats.openMarkets %>
-                </div>
-            </div>
+        <!-- HTMX 2.0.3 -->
+        <script src="https://unpkg.com/htmx.org@2.0.3"
+            integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq"
+            crossorigin="anonymous"></script>
 
-            <!-- Pending Resolutions -->
-            <div class="card-glass rounded-xl p-5 <%= stats.pendingResolutions > 0 ? 'border-yellow-500/50' : '' %>">
-                <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Pending Resolution</div>
-                <div class="text-3xl font-bold <%= stats.pendingResolutions > 0 ? 'text-yellow-400' : 'text-white' %>">
-                    <%= stats.pendingResolutions %>
-                </div>
-            </div>
+        <!-- Tailwind CSS 3.4 CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            'yes': '#22c55e',
+                            'yes-dark': '#16a34a',
+                            'no': '#ef4444',
+                            'no-dark': '#dc2626',
+                            'primary': '#6366f1',
+                            'primary-dark': '#4f46e5',
+                            'secondary': '#8b5cf6',
+                        },
+                        animation: {
+                            'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        }
+                    }
+                }
+            }
+        </script>
 
-            <!-- Total Volume -->
-            <div class="card-glass rounded-xl p-5">
-                <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Total Volume</div>
-                <div
-                    class="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    $<%= stats.totalVolume %>
-                </div>
-            </div>
-        </div>
+        <!-- Wallet Integration -->
+        <script src="/wallet.js" defer></script>
 
-        <!-- Quick Actions -->
-        <div class="flex flex-wrap gap-4 mb-8">
-            <a href="/admin/create-market" class="flex items-center gap-2 px-6 py-3 btn-primary text-white rounded-xl font-medium transition-all
-      hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Create New Market
-            </a>
+        <style>
+            .gradient-bg {
+                background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+            }
 
-            <button onclick="refreshStats()"
-                class="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-medium transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Refresh
-            </button>
-        </div>
+            .card-glass {
+                background: rgba(255, 255, 255, 0.05);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
 
-        <!-- Pending Resolutions Section -->
-        <% if (pendingMarkets && pendingMarkets.length> 0) { %>
-            <div class="mb-8">
-                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
-                    Pending Resolutions
-                    <span class="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-sm rounded-full">
-                        <%= pendingMarkets.length %>
-                    </span>
-                </h2>
-                <div class="space-y-3">
-                    <% pendingMarkets.forEach(function(market) { %>
-                        <div class="card-glass rounded-xl p-4 border-yellow-500/30">
-                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div class="flex-1">
-                                    <h3 class="font-medium text-white mb-1">
-                                        <%= market.question %>
-                                    </h3>
-                                    <div class="flex flex-wrap gap-3 text-sm text-gray-400">
-                                        <span>ID: #<%= market.id %></span>
-                                        <span>YES: $<%= market.yesPoolFormatted %></span>
-                                        <span>NO: $<%= market.noPoolFormatted %></span>
-                                        <span>Closed: <%= market.closeTimeFormatted %></span>
-                                    </div>
-                                </div>
-                                <a href="/admin/resolve/<%= market.id %>" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg font-medium text-sm transition-all
-                  whitespace-nowrap">
-                                    Resolve Market
-                                </a>
-                            </div>
+            .card-glass:hover {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+
+            .btn-primary {
+                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            }
+
+            .btn-primary:hover {
+                background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            }
+        </style>
+    </head>
+
+    <body class="gradient-bg min-h-screen text-white flex flex-col">
+        <!-- Navigation Header -->
+        <nav
+            class="border-b border-white/10 px-4 py-4 sticky top-0 z-40 bg-gradient-to-b from-[#1e1b4b] to-transparent backdrop-blur-md">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+                <a href="/"
+                    class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    FoundersNet
+                </a>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <a href="/my-bets"
+                        class="text-gray-300 hover:text-white transition-colors text-sm sm:text-base px-2 py-1">My
+                        Bets</a>
+                    <div id="network-status"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                        <span class="w-2 h-2 rounded-full bg-yes" id="network-dot"></span>
+                        <span class="text-xs text-gray-400" id="network-label">
+                            <%= network %>
+                        </span>
+                    </div>
+                    <div id="wallet-connected" class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                            <span class="text-yes text-xs">●</span>
+                            <span id="wallet-address-display" class="text-sm font-mono text-gray-300">
+                                <%= adminAddress.slice(0, 6) %>...<%= adminAddress.slice(-4) %>
+                            </span>
                         </div>
-                        <% }); %>
-                </div>
-            </div>
-            <% } %>
-
-                <!-- All Markets Table -->
-                <div>
-                    <h2 class="text-xl font-bold mb-4">All Markets</h2>
-
-                    <% if (!markets || markets.length===0) { %>
-                        <div class="card-glass rounded-xl p-8 text-center">
-                            <svg class="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
+                        <button onclick="disconnectWallet()"
+                            class="p-2 text-gray-400 hover:text-white transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
-                            <p class="text-gray-400 mb-4">No markets created yet.</p>
-                            <a href="/admin/create-market"
-                                class="inline-flex items-center gap-2 px-6 py-3 btn-primary text-white rounded-xl">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                Create Your First Market
-                            </a>
-                        </div>
-                        <% } else { %>
-                            <div class="card-glass rounded-xl overflow-hidden">
-                                <div class="overflow-x-auto">
-                                    <table class="w-full">
-                                        <thead>
-                                            <tr class="border-b border-white/10">
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                    ID</th>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                    Question</th>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                    Status</th>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                    YES Pool</th>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                    NO Pool</th>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                    Close Time</th>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                    Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-white/5">
-                                            <% markets.forEach(function(market) { %>
-                                                <tr class="hover:bg-white/5 transition-colors">
-                                                    <td class="px-4 py-3 text-sm font-mono text-gray-300">#<%= market.id
-                                                            %>
-                                                    </td>
-                                                    <td class="px-4 py-3">
-                                                        <a href="/market/<%= market.id %>"
-                                                            class="text-white hover:text-primary transition-colors">
-                                                            <%= market.question.length> 50 ?
-                                                                market.question.substring(0, 50) + '...' :
-                                                                market.question %>
-                                                        </a>
-                                                    </td>
-                                                    <td class="px-4 py-3">
-                                                        <span
-                                                            class="px-2 py-1 rounded-full text-xs font-medium
-                                <% if (market.isOpen) { %>bg-yes/20 text-yes<% } else if (market.isClosed && !market.isResolved) { %>bg-yellow-500/20 text-yellow-400<% } else { %>bg-gray-500/20 text-gray-400<% } %>">
-                                                            <%= market.stateLabel %>
-                                                                <% if (market.isResolved) { %> (<%= market.outcomeLabel
-                                                                        %>)<% } %>
-                                                        </span>
-                                                    </td>
-                                                    <td class="px-4 py-3 text-sm text-yes">$<%= market.yesPoolFormatted
-                                                            %>
-                                                    </td>
-                                                    <td class="px-4 py-3 text-sm text-no">$<%= market.noPoolFormatted %>
-                                                    </td>
-                                                    <td class="px-4 py-3 text-sm text-gray-400">
-                                                        <%= market.closeTimeFormatted %>
-                                                    </td>
-                                                    <td class="px-4 py-3">
-                                                        <div class="flex items-center gap-2">
-                                                            <a href="/market/<%= market.id %>"
-                                                                class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs transition-colors">
-                                                                View
-                                                            </a>
-                                                            <% if (market.isClosed && !market.isResolved) { %>
-                                                                <a href="/admin/resolve/<%= market.id %>"
-                                                                    class="px-3 py-1 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded text-xs transition-colors">
-                                                                    Resolve
-                                                                </a>
-                                                                <% } %>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                <% }); %>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <% } %>
+                        </button>
+                    </div>
                 </div>
+            </div>
+        </nav>
 
-                <!-- Contract Info -->
-                <div class="mt-8 card-glass rounded-xl p-6">
-                    <h3 class="text-sm font-medium text-gray-400 mb-3">Contract Information</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span class="text-gray-500">Contract Address:</span>
-                            <a href="<%= blockExplorer %>/address/<%= contractAddress %>" target="_blank"
-                                rel="noopener noreferrer" class="ml-2 text-primary hover:underline font-mono break-all">
-                                <%= contractAddress %>
-                            </a>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Network:</span>
-                            <span class="ml-2 text-white">
-                                <%= networkName %> (Chain ID: <%= chainId %>)
-                            </span>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">USDC Address:</span>
-                            <a href="<%= blockExplorer %>/address/<%= usdcAddress %>" target="_blank"
-                                rel="noopener noreferrer" class="ml-2 text-primary hover:underline font-mono break-all">
-                                <%= usdcAddress %>
-                            </a>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Admin Address:</span>
-                            <span class="ml-2 text-yellow-400 font-mono break-all">
-                                <%= adminAddress %>
-                            </span>
-                        </div>
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+            <!-- Admin Mode Indicator -->
+            <div class="mb-6 flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
+                <div class="w-3 h-3 rounded-full bg-yellow-400 animate-pulse"></div>
+                <div class="flex-1">
+                    <span class="font-semibold text-yellow-400">Admin Mode Active</span>
+                    <span class="text-yellow-200/70 text-sm ml-2">Managing FoundersNet Markets</span>
+                </div>
+                <a href="/" class="text-yellow-400 hover:text-yellow-300 text-sm">Exit Admin →</a>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <!-- Total Markets -->
+                <div class="card-glass rounded-xl p-5">
+                    <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Total Markets</div>
+                    <div class="text-3xl font-bold text-white">
+                        <%= stats.totalMarkets %>
                     </div>
                 </div>
 
-                <script>
-                    function refreshStats() {
-                        window.location.reload();
+                <!-- Open Markets -->
+                <div class="card-glass rounded-xl p-5">
+                    <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Open Markets</div>
+                    <div class="text-3xl font-bold text-yes">
+                        <%= stats.openMarkets %>
+                    </div>
+                </div>
+
+                <!-- Pending Resolutions -->
+                <div
+                    class="card-glass rounded-xl p-5 <%= stats.pendingResolutions > 0 ? 'border-yellow-500/50' : '' %>">
+                    <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Pending Resolution</div>
+                    <div
+                        class="text-3xl font-bold <%= stats.pendingResolutions > 0 ? 'text-yellow-400' : 'text-white' %>">
+                        <%= stats.pendingResolutions %>
+                    </div>
+                </div>
+
+                <!-- Total Volume -->
+                <div class="card-glass rounded-xl p-5">
+                    <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Total Volume</div>
+                    <div
+                        class="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                        $<%= stats.totalVolume %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="flex flex-wrap gap-4 mb-8">
+                <a href="/admin/create-market?wallet=<%= adminAddress %>" class="flex items-center gap-2 px-6 py-3 btn-primary text-white rounded-xl font-medium transition-all
+      hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Create New Market
+                </a>
+
+                <button onclick="refreshStats()"
+                    class="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-medium transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+
+            <!-- Pending Resolutions Section -->
+            <% if (pendingMarkets && pendingMarkets.length> 0) { %>
+                <div class="mb-8">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                        Pending Resolutions
+                        <span class="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-sm rounded-full">
+                            <%= pendingMarkets.length %>
+                        </span>
+                    </h2>
+                    <div class="space-y-3">
+                        <% pendingMarkets.forEach(function(market) { %>
+                            <div class="card-glass rounded-xl p-4 border-yellow-500/30">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div class="flex-1">
+                                        <h3 class="font-medium text-white mb-1">
+                                            <%= market.question %>
+                                        </h3>
+                                        <div class="flex flex-wrap gap-3 text-sm text-gray-400">
+                                            <span>ID: #<%= market.id %></span>
+                                            <span>YES: $<%= market.yesPoolFormatted %></span>
+                                            <span>NO: $<%= market.noPoolFormatted %></span>
+                                            <span>Closed: <%= market.closeTimeFormatted %></span>
+                                        </div>
+                                    </div>
+                                    <a href="/admin/resolve/<%= market.id %>?wallet=<%= adminAddress %>" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg font-medium text-sm transition-all
+                  whitespace-nowrap">
+                                        Resolve Market
+                                    </a>
+                                </div>
+                            </div>
+                            <% }); %>
+                    </div>
+                </div>
+                <% } %>
+
+                    <!-- All Markets Table -->
+                    <div>
+                        <h2 class="text-xl font-bold mb-4">All Markets</h2>
+
+                        <% if (!markets || markets.length===0) { %>
+                            <div class="card-glass rounded-xl p-8 text-center">
+                                <svg class="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p class="text-gray-400 mb-4">No markets created yet.</p>
+                                <a href="/admin/create-market?wallet=<%= adminAddress %>"
+                                    class="inline-flex items-center gap-2 px-6 py-3 btn-primary text-white rounded-xl">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Create Your First Market
+                                </a>
+                            </div>
+                            <% } else { %>
+                                <div class="card-glass rounded-xl overflow-hidden">
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full">
+                                            <thead>
+                                                <tr class="border-b border-white/10">
+                                                    <th
+                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                        ID</th>
+                                                    <th
+                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                        Question</th>
+                                                    <th
+                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                        Status</th>
+                                                    <th
+                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                        YES Pool</th>
+                                                    <th
+                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                        NO Pool</th>
+                                                    <th
+                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                        Close Time</th>
+                                                    <th
+                                                        class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                        Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-white/5">
+                                                <% markets.forEach(function(market) { %>
+                                                    <tr class="hover:bg-white/5 transition-colors">
+                                                        <td class="px-4 py-3 text-sm font-mono text-gray-300">#<%=
+                                                                market.id %>
+                                                        </td>
+                                                        <td class="px-4 py-3">
+                                                            <a href="/market/<%= market.id %>"
+                                                                class="text-white hover:text-primary transition-colors">
+                                                                <%= market.question.length> 50 ?
+                                                                    market.question.substring(0, 50) + '...' :
+                                                                    market.question %>
+                                                            </a>
+                                                        </td>
+                                                        <td class="px-4 py-3">
+                                                            <span
+                                                                class="px-2 py-1 rounded-full text-xs font-medium
+                                        <% if (market.isOpen) { %>bg-yes/20 text-yes<% } else if (market.isClosed && !market.isResolved) { %>bg-yellow-500/20 text-yellow-400<% } else { %>bg-gray-500/20 text-gray-400<% } %>">
+                                                                <%= market.stateLabel %>
+                                                                    <% if (market.isResolved) { %> (<%=
+                                                                            market.outcomeLabel %>)<% } %>
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm text-yes">$<%=
+                                                                market.yesPoolFormatted %>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm text-no">$<%=
+                                                                market.noPoolFormatted %>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm text-gray-400">
+                                                            <%= market.closeTimeFormatted %>
+                                                        </td>
+                                                        <td class="px-4 py-3">
+                                                            <div class="flex items-center gap-2">
+                                                                <a href="/market/<%= market.id %>"
+                                                                    class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs transition-colors">
+                                                                    View
+                                                                </a>
+                                                                <% if (market.isOpen) { %>
+                                                                    <button
+                                                                        onclick="openEarlyResolveModal(<%= market.id %>, `<%- market.question.replace(/`/g, '\\`') %>`)"
+                                                                        class="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded text-xs transition-colors"
+                                                                        title="Resolve this market early before close time">
+                                                                        Resolve Early
+                                                                    </button>
+                                                                    <% } else if (market.isClosed && !market.isResolved)
+                                                                        { %>
+                                                                        <a href="/admin/resolve/<%= market.id %>?wallet=<%= adminAddress %>"
+                                                                            class="px-3 py-1 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded text-xs transition-colors">
+                                                                            Resolve
+                                                                        </a>
+                                                                        <% } %>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <% } %>
+                    </div>
+
+                    <!-- Contract Info -->
+                    <div class="mt-8 card-glass rounded-xl p-6">
+                        <h3 class="text-sm font-medium text-gray-400 mb-3">Contract Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Contract Address:</span>
+                                <a href="<%= blockExplorer %>/address/<%= contractAddress %>" target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="ml-2 text-primary hover:underline font-mono break-all">
+                                    <%= contractAddress %>
+                                </a>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Network:</span>
+                                <span class="ml-2 text-white">
+                                    <%= networkName %> (Chain ID: <%= chainId %>)
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">USDC Address:</span>
+                                <a href="<%= blockExplorer %>/address/<%= usdcAddress %>" target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="ml-2 text-primary hover:underline font-mono break-all">
+                                    <%= usdcAddress %>
+                                </a>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Admin Address:</span>
+                                <span class="ml-2 text-yellow-400 font-mono break-all">
+                                    <%= adminAddress %>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-white/10 px-4 py-6 mt-auto">
+            <div class="max-w-7xl mx-auto text-center text-gray-400 text-sm">
+                <p>FoundersNet &copy; <%= new Date().getFullYear() %> — Permissionless prediction markets for startup
+                        fundraises</p>
+            </div>
+        </footer>
+
+        <!-- Global Configuration -->
+        <script>
+            window.appConfig = {
+                network: '<%= network %>',
+                chainId: <%= typeof chainId !== 'undefined' ? chainId : 31337 %>,
+                contractAddress: '<%= typeof contractAddress !== "undefined" ? contractAddress : "" %>',
+                usdcAddress: '<%= typeof usdcAddress !== "undefined" ? usdcAddress : "" %>',
+                adminAddress: '<%= typeof adminAddress !== "undefined" ? adminAddress : "" %>',
+                blockExplorer: '<%= typeof blockExplorer !== "undefined" ? blockExplorer : "" %>',
+                rpcUrl: '<%= typeof rpcUrl !== "undefined" ? rpcUrl : "http://127.0.0.1:8545" %>'
+            };
+
+            window.walletAddress = '<%= adminAddress %>';
+            window.chainId = <%= chainId %>;
+            window.isAdmin = true;
+
+            function refreshStats() {
+                window.location.reload();
+            }
+        </script>
+
+        <!-- Early Resolve Modal -->
+        <div id="early-resolve-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeEarlyResolveModal()"></div>
+
+            <!-- Modal Content -->
+            <div
+                class="relative bg-gradient-to-br from-[#1e1b4b] to-[#312e81] rounded-2xl border border-white/20 max-w-lg w-full p-6 shadow-2xl">
+                <button onclick="closeEarlyResolveModal()"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <h2 class="text-xl font-bold mb-2 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Early Resolution
+                </h2>
+
+                <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 mb-4">
+                    <p class="text-orange-300 text-sm">
+                        <strong>Warning:</strong> This will immediately close the market and prevent any further
+                        betting.
+                        This action is irreversible.
+                    </p>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-gray-400 text-sm mb-2">Market:</p>
+                    <p id="early-resolve-question" class="text-white font-medium"></p>
+                </div>
+
+                <div class="mb-6">
+                    <p class="text-gray-400 text-sm mb-3">Select the winning outcome:</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="early-resolve-yes-btn" onclick="selectEarlyResolveOutcome(true)"
+                            class="py-3 rounded-xl border-2 border-yes/30 bg-yes/10 hover:bg-yes/20 text-yes font-bold transition-all">
+                            YES
+                        </button>
+                        <button id="early-resolve-no-btn" onclick="selectEarlyResolveOutcome(false)"
+                            class="py-3 rounded-xl border-2 border-no/30 bg-no/10 hover:bg-no/20 text-no font-bold transition-all">
+                            NO
+                        </button>
+                    </div>
+                </div>
+
+                <div id="early-resolve-confirm" class="hidden">
+                    <div class="bg-white/5 rounded-lg p-4 mb-4">
+                        <p class="text-gray-300 text-sm">
+                            You are about to resolve this market with outcome:
+                            <strong id="early-resolve-outcome-label" class="text-white"></strong>
+                        </p>
+                    </div>
+                    <button id="early-resolve-submit" onclick="submitEarlyResolve()"
+                        class="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Confirm Early Resolution
+                    </button>
+                </div>
+
+                <div id="early-resolve-loading" class="hidden text-center py-4">
+                    <div class="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full mx-auto mb-2">
+                    </div>
+                    <p class="text-gray-400">Processing transaction...</p>
+                </div>
+
+                <div id="early-resolve-error" class="hidden mt-4 p-4 bg-no/10 border border-no/30 rounded-lg">
+                    <p class="text-no text-sm"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Early Resolve JavaScript -->
+        <script>
+            let earlyResolveMarketId = null;
+            let earlyResolveOutcome = null;
+
+            function openEarlyResolveModal(marketId, question) {
+                earlyResolveMarketId = marketId;
+                earlyResolveOutcome = null;
+
+                document.getElementById('early-resolve-question').textContent = question;
+                document.getElementById('early-resolve-modal').classList.remove('hidden');
+
+                // Reset UI state
+                document.getElementById('early-resolve-confirm').classList.add('hidden');
+                document.getElementById('early-resolve-loading').classList.add('hidden');
+                document.getElementById('early-resolve-error').classList.add('hidden');
+                document.getElementById('early-resolve-yes-btn').classList.remove('ring-2', 'ring-yes');
+                document.getElementById('early-resolve-no-btn').classList.remove('ring-2', 'ring-no');
+            }
+
+            function closeEarlyResolveModal() {
+                document.getElementById('early-resolve-modal').classList.add('hidden');
+                earlyResolveMarketId = null;
+                earlyResolveOutcome = null;
+            }
+
+            function selectEarlyResolveOutcome(outcome) {
+                earlyResolveOutcome = outcome;
+
+                // Update button styles
+                const yesBtn = document.getElementById('early-resolve-yes-btn');
+                const noBtn = document.getElementById('early-resolve-no-btn');
+                const outcomeLabel = document.getElementById('early-resolve-outcome-label');
+
+                if (outcome) {
+                    yesBtn.classList.add('ring-2', 'ring-yes');
+                    noBtn.classList.remove('ring-2', 'ring-no');
+                    outcomeLabel.textContent = 'YES';
+                    outcomeLabel.className = 'text-yes font-bold';
+                } else {
+                    noBtn.classList.add('ring-2', 'ring-no');
+                    yesBtn.classList.remove('ring-2', 'ring-yes');
+                    outcomeLabel.textContent = 'NO';
+                    outcomeLabel.className = 'text-no font-bold';
+                }
+
+                // Show confirm section
+                document.getElementById('early-resolve-confirm').classList.remove('hidden');
+                document.getElementById('early-resolve-error').classList.add('hidden');
+            }
+
+            async function submitEarlyResolve() {
+                if (earlyResolveMarketId === null || earlyResolveOutcome === null) return;
+
+                const errorDiv = document.getElementById('early-resolve-error');
+                const loadingDiv = document.getElementById('early-resolve-loading');
+                const confirmDiv = document.getElementById('early-resolve-confirm');
+
+                // Show loading
+                loadingDiv.classList.remove('hidden');
+                confirmDiv.classList.add('hidden');
+                errorDiv.classList.add('hidden');
+
+                try {
+                    console.log('[Admin] Starting early resolve for market', earlyResolveMarketId, 'outcome:', earlyResolveOutcome);
+
+                    // Check wallet is connected
+                    if (!window.wallet || !window.wallet.isConnected()) {
+                        throw new Error('Wallet not connected. Please connect your wallet and try again.');
                     }
-                </script>
-                ` }) %>
+
+                    console.log('[Admin] Wallet connected:', window.wallet.address);
+
+                    // Check network
+                    if (!window.wallet.isCorrectNetwork()) {
+                        console.log('[Admin] Wrong network, attempting to switch...');
+                        const switched = await window.wallet.switchNetwork();
+                        if (!switched) {
+                            throw new Error('Please switch to the correct network (chainId: ' + window.appConfig.chainId + ')');
+                        }
+                    }
+
+                    console.log('[Admin] Network OK, fetching transaction data...');
+
+                    // Get transaction data from backend
+                    const response = await fetch('/api/admin/tx/resolve-market-early', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Wallet-Address': window.wallet.address || window.appConfig.adminAddress
+                        },
+                        body: JSON.stringify({
+                            marketId: earlyResolveMarketId,
+                            outcome: earlyResolveOutcome
+                        })
+                    });
+
+                    const result = await response.json();
+                    console.log('[Admin] Backend response:', result);
+
+                    if (!result.success) {
+                        throw new Error(result.error || 'Failed to build transaction');
+                    }
+
+                    console.log('[Admin] Sending transaction to wallet...');
+
+                    // Send transaction using wallet.js
+                    const txHash = await window.wallet.signTransaction(result.transaction);
+                    console.log('[Admin] Transaction sent:', txHash);
+
+                    // Wait for confirmation
+                    console.log('[Admin] Waiting for confirmation...');
+                    const receipt = await window.wallet.waitForReceipt(txHash);
+                    console.log('[Admin] Receipt:', receipt);
+
+                    if (receipt.status === '0x1' || receipt.status === 1) {
+                        // Show success and reload
+                        alert('Market resolved successfully!\nTransaction: ' + txHash);
+                        window.location.reload();
+                    } else {
+                        throw new Error('Transaction failed on-chain');
+                    }
+                } catch (error) {
+                    console.error('[Admin] Early resolution error:', error);
+                    const errorMsg = error.message || 'Failed to execute transaction';
+                    errorDiv.querySelector('p').textContent = errorMsg;
+                    errorDiv.classList.remove('hidden');
+                    loadingDiv.classList.add('hidden');
+                    confirmDiv.classList.remove('hidden');
+                }
+            }
+        </script>
+    </body>
+
+    </html>

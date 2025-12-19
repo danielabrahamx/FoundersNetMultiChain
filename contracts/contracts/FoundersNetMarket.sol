@@ -211,6 +211,47 @@ contract FoundersNetMarket is Ownable, ReentrancyGuard {
         emit MarketResolved(_marketId, _outcome, block.timestamp);
     }
     
+    /**
+     * @notice Resolve a market early before close time (admin only)
+     * @param _marketId Market ID to resolve
+     * @param _outcome Winning outcome (true = YES, false = NO)
+     * @dev Requirements:
+     * - Only callable by admin (owner)
+     * - Market must exist
+     * - Market must be in Open state (not already closed/resolved)
+     * - Closes the market immediately and resolves in one transaction
+     * - No further bets can be placed after calling this
+     * - Resolution is permanent and irreversible
+     * - Emits MarketResolved event
+     * 
+     * Use Cases:
+     * - Outcome becomes determinable before close time
+     * - Emergency resolution needed
+     * - Market question becomes invalid or needs cancellation
+     */
+    function resolveMarketEarly(
+        uint256 _marketId,
+        bool _outcome
+    ) external onlyOwner {
+        if (_marketId >= marketCount) revert MarketDoesNotExist();
+        
+        Market storage market = markets[_marketId];
+        
+        // Market must be Open to resolve early
+        if (market.state != MarketState.Open) {
+            // If already closed (but not resolved), use regular resolveMarket
+            if (market.state == MarketState.Closed) revert MarketNotOpen();
+            // If already resolved, revert
+            revert MarketAlreadyResolved();
+        }
+        
+        // Close and resolve in one transaction
+        market.state = MarketState.Resolved;
+        market.outcome = _outcome;
+        
+        emit MarketResolved(_marketId, _outcome, block.timestamp);
+    }
+    
     // ============ User Functions ============
     
     /**
